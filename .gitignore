@@ -10,4 +10,13 @@ diagrams/README.md
 api/README.md
 .puml.*
 config.json
+package.json
+package-lock.json
+tsconfig.json
 *.log
+# JavaScript dependencies
+Client/node_modules/
+server/node_modules/
+
+# other generated content…
+requirements.txt
