@@ -1,0 +1,13 @@
+CLAUDE.md
+UML.puml
+diagrams/
+.env
+.env.*
+Client/README.md
+database/README.md
+server/README.md
+diagrams/README.md
+api/README.md
+.puml.*
+config.json
+*.log
