@@ -6,4 +6,6 @@ export interface Item {
   priority: Priority;
   shoppingListId: string;
   storeId?: string;
+  quantity?: number; 
+  notes?: string;
 }
