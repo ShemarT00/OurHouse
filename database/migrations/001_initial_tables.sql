@@ -75,3 +75,16 @@ CREATE TABLE IF NOT EXISTS ITEM (
     ITEM_BOUGHT     BOOLEAN         NOT NULL DEFAULT FALSE,
     ITEM_CREATED_AT TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
+
+-- ---------------------------------------------------------------------------
+-- NOTIFICATION
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS NOTIFICATION (
+    NOTIF_ID         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    NOTIF_USER_ID    BIGINT          NOT NULL REFERENCES "USER"(USER_ID)     ON DELETE CASCADE,
+    NOTIF_TYPE       VARCHAR(50)     NOT NULL,
+    NOTIF_MESSAGE    TEXT            NOT NULL,
+    NOTIF_READ       BOOLEAN         NOT NULL DEFAULT FALSE,
+    NOTIF_CREATED_AT TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+);
+
