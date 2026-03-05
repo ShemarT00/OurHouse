@@ -7,13 +7,14 @@ class Priority(str, Enum):
     LOW = "LOW"
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
+    UNPRIORITISED = "UNPRIORITISED"
 
 
 @dataclass
 class Item:
     OHID: int
     name: str
-    priority: Priority
+    priority: Enum
     shopping_list_id: str
     store_id: Optional[str] = None
     quantity: Optional[int] = None
@@ -24,7 +25,7 @@ class Item:
         self,
         OHID: int,
         name: str,
-        priority: Priority,
+        priority: Enum,
         shopping_list_id: str,
         store_id: Optional[str] = None,
         quantity: Optional[int] = None,

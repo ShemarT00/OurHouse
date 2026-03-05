@@ -11,7 +11,9 @@ class ItemDAO:
     
     def __init__(self):
         pass
-    
+
+
+# Fetch Queries   
     def fetch_all_items(self, list_id: str) -> List[Dict[str, Any]]:
         """Query all items on a specific shopping list"""
         query = "SELECT * FROM ITEM WHERE ITEM_LIST_ID = %s"
@@ -28,7 +30,15 @@ class ItemDAO:
         if result:
             return result[0]
         return None
-    
+
+
+# Other Queries
+    def item_bought(self, item_id: str) -> bool:
+        """Mark an item as purchased"""
+        query = "UPDATE ITEM SET ITEM_BOUGHT = TRUE WHERE ITEM_ID = %s"
+        result = self.db.execute(query, (item_id,))
+        return result is not None
+
 # Priority Queries
     def fetch_priority_of_item(self, item_id: str) -> int:
 
@@ -71,6 +81,10 @@ class ItemDAO:
         result = self.db.execute(query, params)
         return result.fetchall()  # Return all items as a list of dictionaries
 
+
+
+# CRUD Operations
+
     def create_item(self, data: Dict[str, Any]) -> Dict[str, Any]:
         
         """Create a new item on a list"""
@@ -110,11 +124,9 @@ class ItemDAO:
     
     def delete_item(self, item_id: str) -> bool:
         """Delete an item"""
-        pass
-    
-    def fetch_items_by_priority(self, list_id: str, priority: str,) -> List[Dict[str, Any]]:
-        """Query items filtered by priority"""
-        pass
+        query = "DELETE FROM ITEM WHERE ITEM_ID = %s"
+        result = self.db.execute(query, (item_id,))
+        return result is not None
     
     def fetch_unpurchased_items(self, list_id: str) -> List[Dict[str, Any]]:
         """Query items not yet marked as purchased"""
