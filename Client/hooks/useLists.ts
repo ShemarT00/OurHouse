@@ -1,0 +1,110 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  getHouseholdLists,
+  getShoppingList,
+  createShoppingList,
+  updateShoppingList,
+  deleteShoppingList as deleteShoppingListRequest,
+  archiveShoppingList,
+  CreateListData,
+  UpdateListData,
+} from '@/services/list';
+import { throwIfError } from '@/services/api';
+
+export const listsKey = (householdId: string) =>
+  ['lists', householdId] as const;
+
+export const listKey = (householdId: string, listOHID: string) =>
+  ['list', householdId, listOHID] as const;
+
+/**
+ * All shopping lists for a household + create/update/delete/archive mutations
+ */
+export const useLists = (householdId: string) => {
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: listsKey(householdId),
+    queryFn: () => getHouseholdLists(householdId).then(throwIfError),
+    enabled: !!householdId,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateListData) =>
+      createShoppingList(householdId, data).then(throwIfError),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: listsKey(householdId) });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({
+      listOHID,
+      data,
+    }: {
+      listOHID: string;
+      data: UpdateListData;
+    }) => updateShoppingList(householdId, listOHID, data).then(throwIfError),
+    onSuccess: (_data, { listOHID }) => {
+      queryClient.invalidateQueries({ queryKey: listsKey(householdId) });
+      queryClient.invalidateQueries({
+        queryKey: listKey(householdId, listOHID),
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (listOHID: string) =>
+      deleteShoppingListRequest(householdId, listOHID),
+    onSuccess: (_data, listOHID) => {
+      queryClient.invalidateQueries({ queryKey: listsKey(householdId) });
+      queryClient.removeQueries({ queryKey: listKey(householdId, listOHID) });
+    },
+  });
+
+  const archiveMutation = useMutation({
+    mutationFn: (listOHID: string) =>
+      archiveShoppingList(householdId, listOHID).then(throwIfError),
+    onSuccess: (_data, listOHID) => {
+      queryClient.invalidateQueries({ queryKey: listsKey(householdId) });
+      queryClient.invalidateQueries({
+        queryKey: listKey(householdId, listOHID),
+      });
+    },
+  });
+
+  return {
+    lists: query.data ?? [],
+    isLoading: query.isLoading,
+    error: query.error,
+    createList: createMutation.mutate,
+    createListAsync: createMutation.mutateAsync,
+    updateList: updateMutation.mutate,
+    updateListAsync: updateMutation.mutateAsync,
+    deleteList: deleteMutation.mutate,
+    deleteListAsync: deleteMutation.mutateAsync,
+    archiveList: archiveMutation.mutate,
+    archiveListAsync: archiveMutation.mutateAsync,
+    createMutation,
+    updateMutation,
+    deleteMutation,
+    archiveMutation,
+  };
+};
+
+/**
+ * Fetch a single shopping list by OHID
+ */
+export const useList = (householdId: string, listOHID: string) => {
+  const query = useQuery({
+    queryKey: listKey(householdId, listOHID),
+    queryFn: () => getShoppingList(householdId, listOHID).then(throwIfError),
+    enabled: !!householdId && !!listOHID,
+  });
+
+  return {
+    list: query.data,
+    isLoading: query.isLoading,
+    error: query.error,
+  };
+};
