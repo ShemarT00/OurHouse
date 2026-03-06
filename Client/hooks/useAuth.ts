@@ -16,7 +16,7 @@ interface AuthState {
   supabaseUser: SupabaseUser | null;
   isLoading: boolean;
 }
-
+// Custom hook to manage authentication state and actions
 export const useAuth = () => {
   const [authState, setAuthState] = useState<AuthState>({
     session: null,
@@ -46,6 +46,12 @@ export const useAuth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  /**
+   * Mutation to log in a user with email and password
+   * Handles the API call and updates the authentication state based on the response.
+   * On success, the auth state will be updated by the onAuthStateChange listener.
+   * On error, it will throw the error to be handled by the caller.
+   */
   const loginMutation = useMutation({
     mutationFn: (credentials: LoginCredentials) => loginWithEmail(credentials),
   });

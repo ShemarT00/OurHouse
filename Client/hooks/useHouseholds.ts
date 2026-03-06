@@ -11,8 +11,8 @@ import {
 import { throwIfError } from '@/services/api';
 import { Household } from '@/types';
 
-export const HOUSEHOLDS_KEY = ['households'] as const;
-export const householdKey = (OHID: string) => ['household', OHID] as const;
+export const HOUSEHOLDS_KEY = ['households'] as const; // Query key for households list
+export const householdKey = (OHID: string) => ['household', OHID] as const; // Query key generator for individual household
 
 /**
  * List all households for the current user + create/update/delete mutations
@@ -20,19 +20,27 @@ export const householdKey = (OHID: string) => ['household', OHID] as const;
 export const useHouseholds = () => {
   const queryClient = useQueryClient();
 
+  /**
+   * Fetch all households for the current user
+   */
   const query = useQuery({
     queryKey: HOUSEHOLDS_KEY,
     queryFn: () => getHouseholds().then(throwIfError),
   });
 
+  /**
+   * Mutation to create a new household
+   */
   const createMutation = useMutation({
     mutationFn: (data: CreateHouseholdData) =>
-      createHouseholdRequest(data).then(throwIfError),
+      createHouseholdRequest(data).then(throwIfError), // Call the API to create a household and handle errors
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: HOUSEHOLDS_KEY });
+      queryClient.invalidateQueries({ queryKey: HOUSEHOLDS_KEY }); // Invalidate households query to refetch the updated list
     },
   });
-
+  /**
+   * Mutation to update an existing household
+   */
   const updateMutation = useMutation({
     mutationFn: ({ OHID, data }: { OHID: string; data: UpdateHouseholdData }) =>
       updateHouseholdRequest(OHID, data).then(throwIfError),

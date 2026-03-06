@@ -1,3 +1,11 @@
+/**
+ * Summary:
+ * Custom hook to manage items within a shopping list
+ * Provides functions to fetch, create, update, toggle completion, and delete items.
+ * Uses React Query for data fetching and state management, with optimistic updates for toggling completion and deleting items.
+ * Each mutation handles API calls and updates the local cache to keep the UI in sync with the server state.
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getListItems,
@@ -45,6 +53,11 @@ export const useItems = (householdId: string, listId: string) => {
     },
   });
 
+/**
+ * Mutation to toggle item completion status
+ * Updates the item's completion status in the UI before the server responds.
+ * If the server request fails, it rolls back to the previous state.
+ */
   const toggleMutation = useMutation({
     mutationFn: (itemOHID: string) =>
       toggleItemComplete(householdId, listId, itemOHID).then(throwIfError),

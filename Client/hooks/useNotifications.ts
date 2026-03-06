@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
+import { // Notification-related API functions
   getNotifications,
   getUnreadNotificationsCount,
   markNotificationAsRead,
@@ -9,12 +9,13 @@ import {
   clearReadNotifications,
   subscribeToNotifications,
 } from '@/services/notification';
-import { throwIfError } from '@/services/api';
+import { throwIfError } from '@/services/api'; 
 import { Notification } from '@/types';
 
-export const NOTIFICATIONS_KEY = ['notifications'] as const;
-export const NOTIFICATIONS_COUNT_KEY = ['notifications', 'count'] as const;
+export const NOTIFICATIONS_KEY = ['notifications'] as const; // Query key for notifications list
+export const NOTIFICATIONS_COUNT_KEY = ['notifications', 'count'] as const; // Query key for unread notifications count
 
+// Custom hook to manage notifications
 export const useNotifications = (userId?: string) => {
   const queryClient = useQueryClient();
 
@@ -23,6 +24,9 @@ export const useNotifications = (userId?: string) => {
     queryFn: () => getNotifications().then(throwIfError),
   });
 
+  /**
+   * Fetch count of unread notifications
+   */
   const countQuery = useQuery({
     queryKey: NOTIFICATIONS_COUNT_KEY,
     queryFn: () => getUnreadNotificationsCount().then(throwIfError),
@@ -43,6 +47,7 @@ export const useNotifications = (userId?: string) => {
     return unsubscribe;
   }, [userId, queryClient]);
 
+  // Mutation to mark a single notification as read
   const markReadMutation = useMutation({
     mutationFn: (OHID: string) =>
       markNotificationAsRead(OHID).then(throwIfError),
