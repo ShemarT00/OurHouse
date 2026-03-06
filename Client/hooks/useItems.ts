@@ -9,6 +9,7 @@ import {
   UpdateItemData,
 } from '@/services/item';
 import { throwIfError } from '@/services/api';
+import { Item } from '@/types';
 
 export const itemsKey = (householdId: string, listId: string) =>
   ['items', householdId, listId] as const;
@@ -47,15 +48,45 @@ export const useItems = (householdId: string, listId: string) => {
   const toggleMutation = useMutation({
     mutationFn: (itemOHID: string) =>
       toggleItemComplete(householdId, listId, itemOHID).then(throwIfError),
-    onSuccess: () => {
+    onMutate: async (itemOHID) => {
+      await queryClient.cancelQueries({ queryKey: itemsKey(householdId, listId) });
+      const previous = queryClient.getQueryData<Item[]>(itemsKey(householdId, listId));
+      queryClient.setQueryData<Item[]>(itemsKey(householdId, listId), (old = []) =>
+        old.map(item =>
+          item.OHID === Number(itemOHID)
+            ? { ...item, isCompleted: !item.isCompleted }
+            : item
+        )
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(itemsKey(householdId, listId), context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: itemsKey(householdId, listId) });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (itemOHID: string) =>
-      deleteItemRequest(householdId, listId, itemOHID),
-    onSuccess: () => {
+      deleteItemRequest(householdId, listId, itemOHID).then(throwIfError),
+    onMutate: async (itemOHID) => {
+      await queryClient.cancelQueries({ queryKey: itemsKey(householdId, listId) });
+      const previous = queryClient.getQueryData<Item[]>(itemsKey(householdId, listId));
+      queryClient.setQueryData<Item[]>(itemsKey(householdId, listId), (old = []) =>
+        old.filter(item => item.OHID !== Number(itemOHID))
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(itemsKey(householdId, listId), context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: itemsKey(householdId, listId) });
     },
   });
@@ -72,6 +103,10 @@ export const useItems = (householdId: string, listId: string) => {
     toggleItemAsync: toggleMutation.mutateAsync,
     removeItem: deleteMutation.mutate,
     removeItemAsync: deleteMutation.mutateAsync,
+    isAdding: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isToggling: toggleMutation.isPending,
+    isRemoving: deleteMutation.isPending,
     createMutation,
     updateMutation,
     toggleMutation,

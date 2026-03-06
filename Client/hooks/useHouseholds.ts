@@ -9,6 +9,7 @@ import {
   UpdateHouseholdData,
 } from '@/services/household';
 import { throwIfError } from '@/services/api';
+import { Household } from '@/types';
 
 export const HOUSEHOLDS_KEY = ['households'] as const;
 export const householdKey = (OHID: string) => ['household', OHID] as const;
@@ -42,8 +43,21 @@ export const useHouseholds = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (OHID: string) => deleteHouseholdRequest(OHID),
-    onSuccess: (_data, OHID) => {
+    mutationFn: (OHID: string) => deleteHouseholdRequest(OHID).then(throwIfError),
+    onMutate: async (OHID) => {
+      await queryClient.cancelQueries({ queryKey: HOUSEHOLDS_KEY });
+      const previous = queryClient.getQueryData<Household[]>(HOUSEHOLDS_KEY);
+      queryClient.setQueryData<Household[]>(HOUSEHOLDS_KEY, (old = []) =>
+        old.filter(h => h.OHID !== Number(OHID))
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(HOUSEHOLDS_KEY, context.previous);
+      }
+    },
+    onSettled: (_data, _err, OHID) => {
       queryClient.invalidateQueries({ queryKey: HOUSEHOLDS_KEY });
       queryClient.removeQueries({ queryKey: householdKey(OHID) });
     },
@@ -59,6 +73,9 @@ export const useHouseholds = () => {
     updateHouseholdAsync: updateMutation.mutateAsync,
     deleteHousehold: deleteMutation.mutate,
     deleteHouseholdAsync: deleteMutation.mutateAsync,
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
     createMutation,
     updateMutation,
     deleteMutation,

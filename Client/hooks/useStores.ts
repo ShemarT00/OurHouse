@@ -8,6 +8,7 @@ import {
   UpdateStoreData,
 } from '@/services/store';
 import { throwIfError } from '@/services/api';
+import { Store } from '@/types';
 
 export const STORES_KEY = ['stores'] as const;
 export const storeKey = (OHID: string) => ['store', OHID] as const;
@@ -38,8 +39,21 @@ export const useStores = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (OHID: string) => deleteStoreRequest(OHID),
-    onSuccess: (_data, OHID) => {
+    mutationFn: (OHID: string) => deleteStoreRequest(OHID).then(throwIfError),
+    onMutate: async (OHID) => {
+      await queryClient.cancelQueries({ queryKey: STORES_KEY });
+      const previous = queryClient.getQueryData<Store[]>(STORES_KEY);
+      queryClient.setQueryData<Store[]>(STORES_KEY, (old = []) =>
+        old.filter(s => s.OHID !== Number(OHID))
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(STORES_KEY, context.previous);
+      }
+    },
+    onSettled: (_data, _err, OHID) => {
       queryClient.invalidateQueries({ queryKey: STORES_KEY });
       queryClient.removeQueries({ queryKey: storeKey(OHID) });
     },
@@ -55,6 +69,9 @@ export const useStores = () => {
     updateStoreAsync: updateMutation.mutateAsync,
     deleteStore: deleteMutation.mutate,
     deleteStoreAsync: deleteMutation.mutateAsync,
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
     createMutation,
     updateMutation,
     deleteMutation,

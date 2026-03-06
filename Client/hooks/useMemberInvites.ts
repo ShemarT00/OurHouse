@@ -27,8 +27,12 @@ export const useMemberInvites = () => {
   });
 
   const declineMutation = useMutation({
-    mutationFn: (inviteId: string) => declineHouseholdInvite(inviteId),
+    mutationFn: (inviteId: string) =>
+      declineHouseholdInvite(inviteId).then(throwIfError),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: INVITES_KEY });
+    },
+    onError: () => {
       queryClient.invalidateQueries({ queryKey: INVITES_KEY });
     },
   });
@@ -41,6 +45,8 @@ export const useMemberInvites = () => {
     acceptInviteAsync: acceptMutation.mutateAsync,
     declineInvite: declineMutation.mutate,
     declineInviteAsync: declineMutation.mutateAsync,
+    isAccepting: acceptMutation.isPending,
+    isDeclining: declineMutation.isPending,
     acceptMutation,
     declineMutation,
   };

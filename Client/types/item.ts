@@ -5,7 +5,8 @@ export interface Item {
   name: string;
   priority: Priority;
   shoppingListId: string;
+  isCompleted: boolean;
   storeId?: string;
-  quantity?: number; 
+  quantity?: number;
   notes?: string;
 }

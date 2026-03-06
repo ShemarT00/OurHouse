@@ -7,6 +7,7 @@ import {
   InviteMemberData,
 } from '@/services/member';
 import { throwIfError } from '@/services/api';
+import { Member } from '@/types';
 
 export const membersKey = (householdId: string) =>
   ['members', householdId] as const;
@@ -27,14 +28,30 @@ export const useHouseholdMembers = (householdId: string) => {
 
   const removeMutation = useMutation({
     mutationFn: (memberOHID: string) =>
-      removeMemberFromHousehold(householdId, memberOHID),
-    onSuccess: () => {
+      removeMemberFromHousehold(householdId, memberOHID).then(throwIfError),
+    onMutate: async (memberOHID) => {
+      await queryClient.cancelQueries({ queryKey: membersKey(householdId) });
+      const previous = queryClient.getQueryData<Member[]>(membersKey(householdId));
+      queryClient.setQueryData<Member[]>(membersKey(householdId), (old = []) =>
+        old.filter(m => m.OHID !== Number(memberOHID))
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(membersKey(householdId), context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: membersKey(householdId) });
     },
   });
 
   const leaveMutation = useMutation({
-    mutationFn: () => leaveHouseholdRequest(householdId),
+    mutationFn: () => leaveHouseholdRequest(householdId).then(throwIfError),
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: membersKey(householdId) });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: membersKey(householdId) });
     },
@@ -50,6 +67,9 @@ export const useHouseholdMembers = (householdId: string) => {
     removeMemberAsync: removeMutation.mutateAsync,
     leaveHousehold: leaveMutation.mutate,
     leaveHouseholdAsync: leaveMutation.mutateAsync,
+    isInviting: inviteMutation.isPending,
+    isRemoving: removeMutation.isPending,
+    isLeaving: leaveMutation.isPending,
     inviteMutation,
     removeMutation,
     leaveMutation,

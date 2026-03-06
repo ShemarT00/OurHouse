@@ -53,7 +53,7 @@ export const useNotifications = (userId?: string) => {
   });
 
   const markAllReadMutation = useMutation({
-    mutationFn: markAllNotificationsAsRead,
+    mutationFn: () => markAllNotificationsAsRead().then(throwIfError),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
       queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_COUNT_KEY });
@@ -61,15 +61,28 @@ export const useNotifications = (userId?: string) => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (OHID: string) => deleteNotificationRequest(OHID),
-    onSuccess: () => {
+    mutationFn: (OHID: string) => deleteNotificationRequest(OHID).then(throwIfError),
+    onMutate: async (OHID) => {
+      await queryClient.cancelQueries({ queryKey: NOTIFICATIONS_KEY });
+      const previous = queryClient.getQueryData<Notification[]>(NOTIFICATIONS_KEY);
+      queryClient.setQueryData<Notification[]>(NOTIFICATIONS_KEY, (old = []) =>
+        old.filter(n => n.OHID !== Number(OHID))
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(NOTIFICATIONS_KEY, context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
       queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_COUNT_KEY });
     },
   });
 
   const clearReadMutation = useMutation({
-    mutationFn: clearReadNotifications,
+    mutationFn: () => clearReadNotifications().then(throwIfError),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
     },
@@ -88,6 +101,10 @@ export const useNotifications = (userId?: string) => {
     deleteNotificationAsync: deleteMutation.mutateAsync,
     clearRead: clearReadMutation.mutate,
     clearReadAsync: clearReadMutation.mutateAsync,
+    isMarkingRead: markReadMutation.isPending,
+    isMarkingAllRead: markAllReadMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+    isClearing: clearReadMutation.isPending,
     markReadMutation,
     markAllReadMutation,
     deleteMutation,

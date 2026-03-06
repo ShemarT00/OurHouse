@@ -10,6 +10,7 @@ import {
   UpdateListData,
 } from '@/services/list';
 import { throwIfError } from '@/services/api';
+import { ShoppingList } from '@/types';
 
 export const listsKey = (householdId: string) =>
   ['lists', householdId] as const;
@@ -55,8 +56,21 @@ export const useLists = (householdId: string) => {
 
   const deleteMutation = useMutation({
     mutationFn: (listOHID: string) =>
-      deleteShoppingListRequest(householdId, listOHID),
-    onSuccess: (_data, listOHID) => {
+      deleteShoppingListRequest(householdId, listOHID).then(throwIfError),
+    onMutate: async (listOHID) => {
+      await queryClient.cancelQueries({ queryKey: listsKey(householdId) });
+      const previous = queryClient.getQueryData<ShoppingList[]>(listsKey(householdId));
+      queryClient.setQueryData<ShoppingList[]>(listsKey(householdId), (old = []) =>
+        old.filter(l => l.OHID !== Number(listOHID))
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(listsKey(householdId), context.previous);
+      }
+    },
+    onSettled: (_data, _err, listOHID) => {
       queryClient.invalidateQueries({ queryKey: listsKey(householdId) });
       queryClient.removeQueries({ queryKey: listKey(householdId, listOHID) });
     },
@@ -85,6 +99,10 @@ export const useLists = (householdId: string) => {
     deleteListAsync: deleteMutation.mutateAsync,
     archiveList: archiveMutation.mutate,
     archiveListAsync: archiveMutation.mutateAsync,
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+    isArchiving: archiveMutation.isPending,
     createMutation,
     updateMutation,
     deleteMutation,
