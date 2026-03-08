@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS SHOPPINGLIST (
 CREATE TABLE IF NOT EXISTS ITEM (
     ITEM_ID         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     ITEM_NAME       VARCHAR(255)    NOT NULL,
-    ITEM_PRIORITY   priority_level  NOT NULL DEFAULT 'MEDIUM',
+    ITEM_PRIORITY   INT             NOT NULL DEFAULT 0, -- 0 = UNPRIORITISED 1 = LOW, 2 = MEDIUM, 3 = HIGH
     ITEM_LIST_ID    BIGINT          NOT NULL REFERENCES SHOPPINGLIST(SHOP_ID) ON DELETE CASCADE,
     ITEM_STORE_ID   BIGINT                   REFERENCES STORE(STOR_ID)        ON DELETE SET NULL,
     ITEM_QUANTITY   INT,
@@ -89,6 +89,9 @@ CREATE TABLE IF NOT EXISTS NOTIFICATION (
     NOTI_CREATED_AT TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
 
+-- ---------------------------------------------------------------------------
+-- USER_SESSION
+-- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS USER_SESSION (
     SESS_ID         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     SESS_USER_ID    BIGINT          NOT NULL REFERENCES "USER"(USER_ID)     ON DELETE CASCADE,
@@ -96,6 +99,10 @@ CREATE TABLE IF NOT EXISTS USER_SESSION (
     SESS_CREATED_AT TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     SESS_EXPIRES_AT TIMESTAMPTZ     NOT NULL
 );
+
+----------------------------------------------------------------------------
+-- CODESTYPE    (Code System Type - for categorizing codes used across the app, e.g. notification types, shopping list types, etc.)
+----------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS CODESTYPE (
     CDTY_ID         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
