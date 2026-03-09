@@ -79,18 +79,20 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user }) => {
           <Text className="font-mono text-base">{user.inviteCode}</Text>
         </View>
 
-        <Button
-          label={isPending ? 'Saving...' : 'Save Changes'}
-          onPress={handleSubmit((data) => mutate(data))}
-          disabled={isPending}
-          className="mt-6"
-        />
+        <View className="mt-6">
+          <Button
+            label={isPending ? 'Saving...' : 'Save Changes'}
+            onPress={handleSubmit((data) => mutate(data))}
+            disabled={isPending}
+          />
+        </View>
 
-        <Button
-          label="Sign Out"
-          onPress={() => {/* TODO: call auth sign-out */}}
-          className="mt-3"
-        />
+        <View className="mt-3">
+          <Button
+            label="Sign Out"
+            onPress={() => {/* TODO: call auth sign-out */}}
+          />
+        </View>
       </View>
     </ScrollView>
   );

@@ -50,12 +50,13 @@ const CreateHouseholdScreen: React.FC = () => {
           )}
         />
 
-        <Button
-          label={isPending ? 'Creating...' : 'Create Household'}
-          onPress={handleSubmit((data) => mutate(data))}
-          disabled={isPending}
-          className="mt-6"
-        />
+        <View className="mt-6">
+          <Button
+            label={isPending ? 'Creating...' : 'Create Household'}
+            onPress={handleSubmit((data) => mutate(data))}
+            disabled={isPending}
+          />
+        </View>
       </View>
     </ScrollView>
   );

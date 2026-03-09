@@ -96,11 +96,12 @@ const RegisterScreen: React.FC = () => {
           )}
         />
 
-        <Button
-          label="Create Account"
-          onPress={handleSubmit(onSubmit)}
-          className="mt-4"
-        />
+        <View className="mt-4">
+          <Button
+            label="Create Account"
+            onPress={handleSubmit(onSubmit)}
+          />
+        </View>
 
         <Text className="text-center text-gray-500 mt-6">
           Already have an account?{' '}
