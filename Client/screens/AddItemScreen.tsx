@@ -102,12 +102,13 @@ const AddItemScreen: React.FC<AddItemScreenProps> = ({ listId }) => {
           )}
         />
 
+        <View className="mt-6">
         <Button
           label={isPending ? 'Adding...' : 'Add Item'}
           onPress={handleSubmit((data) => mutate(data))}
           disabled={isPending}
-          className="mt-6"
         />
+        </View>
       </View>
     </ScrollView>
   );
