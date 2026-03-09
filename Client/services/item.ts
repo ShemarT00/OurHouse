@@ -12,12 +12,16 @@ export type Priority = "LOW" | "MEDIUM" | "HIGH";
 export interface CreateItemData {
   name: string;
   priority?: Priority;
+  quantity?: number;
+  notes?: string;
   storeId?: string;
 }
 
 export interface UpdateItemData {
   name?: string;
   priority?: Priority;
+  quantity?: number;
+  notes?: string;
   storeId?: string;
   completed?: boolean;
 }

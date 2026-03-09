@@ -104,6 +104,20 @@ export const useItems = (householdId: string, listId: string) => {
     },
   });
 
+  /**
+   *  Return values from the hook:
+   * - items: the list of items fetched from the server
+   * - isLoading: boolean indicating if the items are currently being fetched
+   * - error: any error that occurred during fetching
+   * - addItem: function to create a new item
+   * - addItemAsync: async version of the addItem function
+   * - updateItem: function to update an existing item
+   * - updateItemAsync: async version of the updateItem function
+   * - toggleItem: function to toggle the completion status of an item
+   * - toggleItemAsync: async version of the toggleItem function
+   * - removeItem: function to remove an item
+   * - removeItemAsync: async version of the removeItem function
+   */
   return {
     items: query.data ?? [],
     isLoading: query.isLoading,

@@ -1,10 +1,12 @@
 import { FlatList, View, Text } from 'react-native';
 import type { Member } from '../../types';
 
+// Component to display a list of household members, used in the household details screen. Each member is shown with a simple avatar and their ID.
 interface MemberListProps {
   members: Member[];
 }
 
+// Row component for each member in the list, showing a circular avatar with the member's ID and their name (or placeholder text)
 function MemberRow({ member }: { member: Member }) {
   return (
     <View className="flex-row items-center gap-3 py-3 border-b border-gray-100">
