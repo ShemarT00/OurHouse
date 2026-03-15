@@ -5,6 +5,11 @@ API endpoints for household member management and invitations
 
 from flask import request, jsonify
 from members import members_bp
+from functools import wraps
+import jwt
+from datetime import datetime
+import uuid
+from os import getenv
 
 
 @members_bp.route("/households/<household_id>/members", methods=["GET"])
@@ -41,11 +46,22 @@ def get_household_member(household_id, member_id):
         Member object with user details
     """
     try:
-        # TODO: Verify user is member of this household
-        # TODO: Query specific member
-        # TODO: Return member data
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({"error": "Unauthorized"}), 401
         
-        return jsonify({"message": f"Get member {member_id} from household {household_id}"}), 200
+        # Verify user is member of this household
+        # TODO: Query database to verify membership
+        
+        # Query specific member
+        # TODO: Query database for member
+        member = {}
+        
+        if not member:
+            return jsonify({"error": "Member not found"}), 404
+        
+        # Return member data
+        return jsonify({"member": member}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -65,18 +81,32 @@ def invite_member(household_id):
         Invite record with invite ID
     """
     try:
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({"error": "Unauthorized"}), 401
+        
         data = request.get_json()
         
         if not data or "email" not in data:
             return jsonify({"error": "Missing required field: email"}), 400
         
-        # TODO: Verify user is admin of this household
-        # TODO: Check if email is already a member
-        # TODO: Create invite record
-        # TODO: Send invitation email
-        # TODO: Return invite details with invite ID
+        email = data.get("email").lower().strip()
         
-        return jsonify({"message": f"Invitation sent to {data.get('email')}"}), 201
+        # Verify user is admin of this household
+        # TODO: Query database to verify admin status
+        
+        # Check if email is already a member
+        # TODO: Query database to check if user exists and is member
+        
+        # Create invite record
+        invite_id = str(uuid.uuid4())
+        # TODO: Insert invite into database
+        
+        # Send invitation email
+        # TODO: Send email via mail service
+        
+        # Return invite details with invite ID
+        return jsonify({"invite_id": invite_id, "email": email, "created_at": datetime.utcnow().isoformat()}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -94,10 +124,21 @@ def remove_member(household_id, member_id):
         Success message
     """
     try:
-        # TODO: Verify user is admin of this household
-        # TODO: Verify not deleting the last admin
-        # TODO: Remove member from household
-        # TODO: Optionally archive their list items
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({"error": "Unauthorized"}), 401
+        
+        # Verify user is admin of this household
+        # TODO: Query database to verify admin status
+        
+        # Verify not deleting the last admin
+        # TODO: Query database to count admins
+        
+        # Remove member from household
+        # TODO: Delete member record from database
+        
+        # Optionally archive their list items
+        # TODO: Archive list items for removed member
         
         return jsonify({"message": f"Member {member_id} removed from household {household_id}"}), 200
     except Exception as e:
@@ -116,14 +157,27 @@ def get_pending_invites():
         List of household invitations
     """
     try:
-        status = request.args.get("status", "pending")
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({"error": "Unauthorized"}), 401
         
-        # TODO: Get current user from JWT token
-        # TODO: Query all invites for this user
-        # TODO: Filter by status if provided
-        # TODO: Include household details in response
+        status = request.args.get("status", "pending").lower()
+        valid_statuses = ["pending", "accepted", "declined"]
         
-        return jsonify({"message": f"Get pending invites with status {status}"}), 200
+        if status not in valid_statuses:
+            return jsonify({"error": f"Invalid status. Must be one of: {', '.join(valid_statuses)}"}), 400
+        
+        # Query all invites for this user
+        # TODO: Query database for invites where user_id matches
+        invites = []
+        
+        # Filter by status if provided
+        # TODO: Filter results from database
+        
+        # Include household details in response
+        # TODO: Join with household table to include details
+        
+        return jsonify({"invites": invites, "status_filter": status}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -140,13 +194,33 @@ def accept_invite(invite_id):
         New member object
     """
     try:
-        # TODO: Get current user from JWT token
-        # TODO: Verify invite belongs to this user
-        # TODO: Create member record
-        # TODO: Mark invite as accepted
-        # TODO: Return new member data
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({"error": "Unauthorized"}), 401
         
-        return jsonify({"message": f"Invitation {invite_id} accepted"}), 200
+        # Get invite from database
+        # TODO: Query database for invite
+        invite = {}
+        
+        if not invite:
+            return jsonify({"error": "Invite not found"}), 404
+        
+        # Verify invite belongs to this user
+        # TODO: Check if invite.user_id matches current_user
+        
+        if invite.get("status") != "pending":
+            return jsonify({"error": f"Invite is already {invite.get('status')}"}), 400
+        
+        # Create member record
+        member_id = str(uuid.uuid4())
+        # TODO: Insert member into database
+        
+        # Mark invite as accepted
+        # TODO: Update invite status to accepted in database
+        
+        # Return new member data
+        member_data = {"member_id": member_id, "household_id": invite.get("household_id"), "created_at": datetime.utcnow().isoformat()}
+        return jsonify({"member": member_data}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -163,10 +237,28 @@ def decline_invite(invite_id):
         Success message
     """
     try:
-        # TODO: Get current user from JWT token
-        # TODO: Verify invite belongs to this user
-        # TODO: Mark invite as declined
-        # TODO: Optionally delete invite record
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({"error": "Unauthorized"}), 401
+        
+        # Get invite from database
+        # TODO: Query database for invite
+        invite = {}
+        
+        if not invite:
+            return jsonify({"error": "Invite not found"}), 404
+        
+        # Verify invite belongs to this user
+        # TODO: Check if invite.user_id matches current_user
+        
+        if invite.get("status") != "pending":
+            return jsonify({"error": f"Invite is already {invite.get('status')}"}), 400
+        
+        # Mark invite as declined
+        # TODO: Update invite status to declined in database
+        
+        # Optionally delete invite record
+        # TODO: Option to hard delete or soft delete
         
         return jsonify({"message": f"Invitation {invite_id} declined"}), 200
     except Exception as e:
