@@ -4,7 +4,8 @@ import { useForm, Controller } from 'react-hook-form';
 import { useAuth } from '@/hooks/useAuth';
 
 interface RegisterForm {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
 }
@@ -14,7 +15,7 @@ export default function RegisterScreen() {
   const { signupAsync, signupMutation } = useAuth();
 
   const { control, handleSubmit } = useForm<RegisterForm>({
-    defaultValues: { name: '', email: '', password: '' },
+    defaultValues: { firstName: '', lastName: '', email: '', password: '' },
   });
 
   const onSubmit = async (data: RegisterForm) => {
@@ -28,12 +29,26 @@ export default function RegisterScreen() {
 
       <Controller
         control={control}
-        name="name"
+        name="firstName"
         rules={{ required: true }}
         render={({ field: { onChange, value } }) => (
           <TextInput
             className="border border-gray-300 rounded-lg px-4 py-3 mb-4"
-            placeholder="Full Name"
+            placeholder="First Name"
+            value={value}
+            onChangeText={onChange}
+          />
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="lastName"
+        rules={{ required: true }}
+        render={({ field: { onChange, value } }) => (
+          <TextInput
+            className="border border-gray-300 rounded-lg px-4 py-3 mb-4"
+            placeholder="Last Name"
             value={value}
             onChangeText={onChange}
           />
