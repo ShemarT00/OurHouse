@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/services/config';
+import { throwIfError } from '@/services/api';
 import {
   loginWithEmail,
   signupWithEmail,
@@ -57,7 +58,7 @@ export const useAuth = () => {
   });
 
   const signupMutation = useMutation({
-    mutationFn: (data: SignupData) => signupWithEmail(data),
+    mutationFn: async (data: SignupData) => throwIfError(await signupWithEmail(data)),
   });
 
   const logoutMutation = useMutation({
