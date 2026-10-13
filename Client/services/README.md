@@ -105,29 +105,6 @@ const handleAddItem = async (
 };
 ```
 
-#### Bulk Operations
-
-```typescript
-import { bulkUpdateItems } from "@/services";
-
-const handleCheckMultipleItems = async (
-  householdId: string,
-  listId: string,
-  itemIds: string[]
-) => {
-  const updates = itemIds.map((id) => ({
-    OHID: id,
-    data: { completed: true },
-  }));
-
-  const response = await bulkUpdateItems(householdId, listId, updates);
-  
-  if (response.success) {
-    console.log("Updated items:", response.data);
-  }
-};
-```
-
 ### Response Format
 
 All services return an `ApiResponse<T>` type:

@@ -5,8 +5,8 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { BurgerMenuButton } from '@/components/atoms';
 
 export default function AppLayout() {
-  const { isAuthenticated, isLoading, supabaseUser } = useAuth();
-  const { unreadCount } = useNotifications(supabaseUser?.id);
+  const { isAuthenticated, isLoading } = useAuth();
+  const { unreadCount } = useNotifications();
 
   if (!isLoading && !isAuthenticated) {
     return <Redirect href="/(auth)/login" />;

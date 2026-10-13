@@ -2,7 +2,6 @@ export * from './useAuth';
 export * from './useUserProfile';
 export * from './useHouseholds';
 export * from './useHouseholdMembers';
-export * from './useMemberInvites';
 export * from './useLists';
 export * from './useItems';
 export * from './useNotifications';

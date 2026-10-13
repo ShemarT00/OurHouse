@@ -66,19 +66,6 @@ export const deleteNotification = async (OHID: string): Promise<
 };
 
 /**
- * Subscribe to notification updates via Supabase real-time
- * This uses Supabase's real-time subscriptions
- */
-export const subscribeToNotifications = (
-  userId: string,
-  callback: (notification: Notification) => void
-) => {
-  // This will be implemented with Supabase real-time
-  // Returns unsubscribe function
-  return () => {};
-};
-
-/**
  * Clear all read notifications
  */
 export const clearReadNotifications = async (): Promise<

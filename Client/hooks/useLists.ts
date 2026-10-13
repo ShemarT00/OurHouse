@@ -5,7 +5,6 @@ import {
   createShoppingList,
   updateShoppingList,
   deleteShoppingList as deleteShoppingListRequest,
-  archiveShoppingList,
   CreateListData,
   UpdateListData,
 } from '@/services/list';
@@ -19,7 +18,7 @@ export const listKey = (householdId: string, listOHID: string) =>
   ['list', householdId, listOHID] as const;
 
 /**
- * All shopping lists for a household + create/update/delete/archive mutations
+ * All shopping lists for a household + create/update/delete mutations
  */
 export const useLists = (householdId: string) => {
   const queryClient = useQueryClient();
@@ -76,17 +75,6 @@ export const useLists = (householdId: string) => {
     },
   });
 
-  const archiveMutation = useMutation({
-    mutationFn: (listOHID: string) =>
-      archiveShoppingList(householdId, listOHID).then(throwIfError),
-    onSuccess: (_data, listOHID) => {
-      queryClient.invalidateQueries({ queryKey: listsKey(householdId) });
-      queryClient.invalidateQueries({
-        queryKey: listKey(householdId, listOHID),
-      });
-    },
-  });
-
   return {
     lists: query.data ?? [],
     isLoading: query.isLoading,
@@ -97,16 +85,12 @@ export const useLists = (householdId: string) => {
     updateListAsync: updateMutation.mutateAsync,
     deleteList: deleteMutation.mutate,
     deleteListAsync: deleteMutation.mutateAsync,
-    archiveList: archiveMutation.mutate,
-    archiveListAsync: archiveMutation.mutateAsync,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
-    isArchiving: archiveMutation.isPending,
     createMutation,
     updateMutation,
     deleteMutation,
-    archiveMutation,
   };
 };
 
