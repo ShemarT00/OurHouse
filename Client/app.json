@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "OurHouse",
+    "slug": "ourhouse",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "ourhouse",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "plugins": [
+      "expo-router"
+    ],
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.anonymous.ourhouse"
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

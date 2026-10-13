@@ -26,7 +26,7 @@ export default function CreateHouseholdScreen() {
         <Text className="text-blue-600">← Back</Text>
       </Pressable>
 
-      /** Create Household Form */
+      {/** Create Household Form */}
 
       <Text className="text-2xl font-bold mb-8">New Household</Text>
 
@@ -45,13 +45,13 @@ export default function CreateHouseholdScreen() {
         )}
       />
 
-      /* Display error message if household creation fails */
+      {/* Display error message if household creation fails */}
 
       {createMutation.isError && (
         <Text className="text-red-500 mb-4">{createMutation.error?.message}</Text>
       )}
 
-      /* Submit button to create the household, shows loading state while the request is pending */
+      {/* Submit button to create the household, shows loading state while the request is pending */}
 
       <Pressable // Button 
         className="bg-blue-600 rounded-lg py-3 items-center"

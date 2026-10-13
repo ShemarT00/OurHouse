@@ -2,6 +2,7 @@ import { Tabs, Redirect } from 'expo-router';
 import { Text } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
+import { BurgerMenuButton } from '@/components/atoms';
 
 export default function AppLayout() {
   const { isAuthenticated, isLoading, supabaseUser } = useAuth();
@@ -33,6 +34,13 @@ export default function AppLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: () => <Text>👤</Text>,
+        }}
+      />
+      <Tabs.Screen
+        name="menu"
+        options={{
+          title: 'Menu',
+          tabBarButton: () => <BurgerMenuButton />,
         }}
       />
       <Tabs.Screen name="household" options={{ href: null }} />

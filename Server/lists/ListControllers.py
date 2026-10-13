@@ -2,8 +2,8 @@
 Lists Controllers
 Business logic for shopping list operations
 """
-import ListDAO
-import ItemDAO
+from lists.ListDAO import ListDAO
+from items.ItemDAO import ItemDAO
 from typing import List, Optional, Dict, Any
 
 

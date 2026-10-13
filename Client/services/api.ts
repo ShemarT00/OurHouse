@@ -171,7 +171,7 @@ const handleApiResponse = async <T>(
         message: `HTTP ${response.status}`,
         status: response.status,
         code: `HTTP_${response.status}`,
-        details: typeof data === "object" ? data : undefined,
+        details: typeof data === "object" && data !== null ? (data as Record<string, unknown>) : undefined,
       },
     };
   }

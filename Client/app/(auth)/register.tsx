@@ -1,10 +1,11 @@
-import { View, Text, TextInput, Pressable, ActivityIndicator } from 'react-native';
+import { Text, TextInput, Pressable, ActivityIndicator, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { useAuth } from '@/hooks/useAuth';
 
 interface RegisterForm {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
 }
@@ -13,32 +14,53 @@ export default function RegisterScreen() {
   const router = useRouter();
   const { signupAsync, signupMutation } = useAuth();
 
-  const { control, handleSubmit } = useForm<RegisterForm>({
-    defaultValues: { name: '', email: '', password: '' },
+  const { control, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
+    defaultValues: { firstName: '', lastName: '', email: '', password: '' },
   });
 
   const onSubmit = async (data: RegisterForm) => {
-    await signupAsync(data);
-    router.replace('/(app)');
+    try {
+      await signupAsync(data);
+      router.replace('/(app)');
+    } catch {
+      // signupMutation.isError is now true; error renders below the form
+    }
   };
 
   return (
-    <View className="flex-1 justify-center px-6 bg-white">
+    <KeyboardAvoidingView className="flex-1 bg-white" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} keyboardShouldPersistTaps="handled" className="px-6">
       <Text className="text-3xl font-bold mb-8 text-center">Create Account</Text>
 
       <Controller
         control={control}
-        name="name"
+        name="firstName"
         rules={{ required: true }}
         render={({ field: { onChange, value } }) => (
           <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3 mb-4"
-            placeholder="Full Name"
+            className="border border-gray-300 rounded-lg px-4 py-3 mb-1"
+            placeholder="First Name"
             value={value}
             onChangeText={onChange}
           />
         )}
       />
+      {errors.firstName && <Text className="text-red-500 text-sm mb-3">First name is required</Text>}
+
+      <Controller
+        control={control}
+        name="lastName"
+        rules={{ required: true }}
+        render={({ field: { onChange, value } }) => (
+          <TextInput
+            className="border border-gray-300 rounded-lg px-4 py-3 mb-1"
+            placeholder="Last Name"
+            value={value}
+            onChangeText={onChange}
+          />
+        )}
+      />
+      {errors.lastName && <Text className="text-red-500 text-sm mb-3">Last name is required</Text>}
 
       <Controller
         control={control}
@@ -46,7 +68,7 @@ export default function RegisterScreen() {
         rules={{ required: true }}
         render={({ field: { onChange, value } }) => (
           <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3 mb-4"
+            className="border border-gray-300 rounded-lg px-4 py-3 mb-1"
             placeholder="Email"
             keyboardType="email-address"
             autoCapitalize="none"
@@ -55,6 +77,7 @@ export default function RegisterScreen() {
           />
         )}
       />
+      {errors.email && <Text className="text-red-500 text-sm mb-3">Email is required</Text>}
 
       <Controller
         control={control}
@@ -62,7 +85,7 @@ export default function RegisterScreen() {
         rules={{ required: true, minLength: 6 }}
         render={({ field: { onChange, value } }) => (
           <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3 mb-6"
+            className="border border-gray-300 rounded-lg px-4 py-3 mb-1"
             placeholder="Password"
             secureTextEntry
             value={value}
@@ -70,6 +93,11 @@ export default function RegisterScreen() {
           />
         )}
       />
+      {errors.password && (
+        <Text className="text-red-500 text-sm mb-5">
+          {errors.password.type === 'minLength' ? 'Password must be at least 6 characters' : 'Password is required'}
+        </Text>
+      )}
 
       {signupMutation.isError && (
         <Text className="text-red-500 mb-4 text-center">
@@ -92,6 +120,7 @@ export default function RegisterScreen() {
       <Pressable className="mt-4 items-center" onPress={() => router.back()}>
         <Text className="text-blue-600">Already have an account? Sign In</Text>
       </Pressable>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

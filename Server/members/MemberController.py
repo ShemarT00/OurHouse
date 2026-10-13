@@ -5,7 +5,7 @@ Business logic for member operations
 
 from typing import List, Optional, Dict, Any
 
-from Server.members import MemberDAO
+from members.MemberDAO import MemberDAO
 
 
 class MemberController:

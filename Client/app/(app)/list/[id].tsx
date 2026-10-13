@@ -47,7 +47,7 @@ export default function ListDetailScreen() {
           <Pressable // Each item in the list, shows a checkbox to toggle completion status and navigates to item details on press 
             className="border border-gray-200 rounded-xl p-4 mb-3 flex-row items-center"
             onPress={() =>
-              router.push({ pathname: `/(app)/item/${item.OHID}`, params: { householdId, listId: id } }) // Navigate to item details screen on press
+              router.push({ pathname: '/(app)/item/[id]', params: { id: item.OHID, householdId, listId: id } }) // Navigate to item details screen on press
             }
           >
             <Pressable // Checkbox to toggle item completion status, shows a checkmark when completed and strikes through the item name
