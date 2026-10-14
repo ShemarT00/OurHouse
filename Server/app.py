@@ -72,6 +72,10 @@ def create_app(config=None):
     def method_not_allowed(e):
         return jsonify({"error": "Method Not Allowed", "message": str(e)}), 405
 
+    @app.errorhandler(501)
+    def not_implemented(e):
+        return jsonify({"error": "Not Implemented", "message": str(e)}), 501
+
     @app.errorhandler(HTTPException)
     def handle_http_exception(e):
         return jsonify({"error": e.name, "message": e.description}), e.code

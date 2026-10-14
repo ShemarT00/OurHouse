@@ -79,11 +79,6 @@ export const API_ENDPOINTS = {
     ADD: (householdId: string) => `/households/${householdId}/members`,
     REMOVE: (householdId: string, OHID: string) =>
       `/households/${householdId}/members/${OHID}`,
-    INVITE: (householdId: string) => `/households/${householdId}/members/invite`,
-    ACCEPT_INVITE: (inviteId: string) =>
-      `/members/invites/${inviteId}/accept`,
-    DECLINE_INVITE: (inviteId: string) =>
-      `/members/invites/${inviteId}/decline`,
   },
 
   // Shopping Lists

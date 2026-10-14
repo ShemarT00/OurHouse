@@ -1,12 +1,11 @@
 import { View, Text, FlatList, Pressable, ActivityIndicator } from 'react-native';
-import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Notification } from '@/types';
 
 export default function NotificationsScreen() {
-  const { supabaseUser } = useAuth();
+
   const { notifications, isLoading, markAllRead, isMarkingAllRead } =
-    useNotifications(supabaseUser?.id);
+    useNotifications();
 
   if (isLoading) {
     return (

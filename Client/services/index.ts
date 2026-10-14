@@ -56,14 +56,7 @@ export {
 export {
   getHouseholdMembers,
   getMember,
-  inviteMemberToHousehold,
-  acceptHouseholdInvite,
-  declineHouseholdInvite,
   removeMemberFromHousehold,
-  getPendingInvites,
-  leaveHousehold,
-  type InviteMemberData,
-  type MemberInvite,
 } from "./member";
 
 // Shopping List Service
@@ -73,7 +66,6 @@ export {
   createShoppingList,
   updateShoppingList,
   deleteShoppingList,
-  archiveShoppingList,
   type CreateListData,
   type UpdateListData,
 } from "./list";
@@ -86,7 +78,6 @@ export {
   updateItem,
   toggleItemComplete,
   deleteItem,
-  bulkUpdateItems,
   type CreateItemData,
   type UpdateItemData,
   type Priority,
@@ -100,7 +91,6 @@ export {
   markNotificationAsRead,
   markAllNotificationsAsRead,
   deleteNotification,
-  subscribeToNotifications,
   clearReadNotifications,
 } from "./notification";
 

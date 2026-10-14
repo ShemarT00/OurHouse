@@ -71,6 +71,3 @@ class ListDAO:
 
         pass
     
-    def fetch_active_lists(self, household_id: str) -> List[Dict[str, Any]]:
-        """Query only active (non-archived) lists"""
-        pass

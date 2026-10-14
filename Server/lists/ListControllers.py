@@ -73,6 +73,3 @@ class ListController:
         return self.listDB.delete_list(list_id)
         
     
-    def archive_list(self, list_id: str) -> Dict[str, Any]:
-        """Archive (mark as inactive) a shopping list"""
-        pass

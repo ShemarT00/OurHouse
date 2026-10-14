@@ -76,16 +76,3 @@ export const deleteShoppingList = async (
     API_ENDPOINTS.LISTS.DELETE(householdId, listOHID)
   );
 };
-
-/**
- * Archive a shopping list (soft delete)
- */
-export const archiveShoppingList = async (
-  householdId: string,
-  listOHID: string
-): Promise<ApiResponse<ShoppingList>> => {
-  return apiPut<ShoppingList>(
-    API_ENDPOINTS.LISTS.UPDATE(householdId, listOHID),
-    { archived: true }
-  );
-};

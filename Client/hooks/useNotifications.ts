@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { // Notification-related API functions
   getNotifications,
@@ -7,7 +6,6 @@ import { // Notification-related API functions
   markAllNotificationsAsRead,
   deleteNotification as deleteNotificationRequest,
   clearReadNotifications,
-  subscribeToNotifications,
 } from '@/services/notification';
 import { throwIfError } from '@/services/api'; 
 import { Notification } from '@/types';
@@ -16,7 +14,7 @@ export const NOTIFICATIONS_KEY = ['notifications'] as const; // Query key for no
 export const NOTIFICATIONS_COUNT_KEY = ['notifications', 'count'] as const; // Query key for unread notifications count
 
 // Custom hook to manage notifications
-export const useNotifications = (userId?: string) => {
+export const useNotifications = () => {
   const queryClient = useQueryClient();
 
   const query = useQuery({
@@ -31,21 +29,6 @@ export const useNotifications = (userId?: string) => {
     queryKey: NOTIFICATIONS_COUNT_KEY,
     queryFn: () => getUnreadNotificationsCount().then(throwIfError),
   });
-
-  // Subscribe to real-time notifications via Supabase
-  useEffect(() => {
-    if (!userId) return;
-
-    const unsubscribe = subscribeToNotifications(
-      userId,
-      (_notification: Notification) => {
-        queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
-        queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_COUNT_KEY });
-      }
-    );
-
-    return unsubscribe;
-  }, [userId, queryClient]);
 
   // Mutation to mark a single notification as read
   const markReadMutation = useMutation({

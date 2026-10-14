@@ -105,35 +105,3 @@ export const deleteItem = async (
     API_ENDPOINTS.ITEMS.DELETE(householdId, listId, itemOHID)
   );
 };
-
-/**
- * Bulk update items (e.g., mark multiple as completed)
- */
-export const bulkUpdateItems = async (
-  householdId: string,
-  listId: string,
-  updates: Array<{ OHID: string; data: UpdateItemData }>
-): Promise<ApiResponse<Item[]>> => {
-  const promises = updates.map((update) =>
-    updateItem(householdId, listId, update.OHID, update.data)
-  );
-
-  const results = await Promise.all(promises);
-  const failedResults = results.filter((r) => !r.success);
-
-  if (failedResults.length > 0) {
-    return {
-      success: false,
-      error: {
-        message: `${failedResults.length} items failed to update`,
-        code: "BULK_UPDATE_FAILED",
-      },
-    };
-  }
-
-  const data = results.map((r) => r.data).filter(Boolean) as Item[];
-  return {
-    success: true,
-    data,
-  };
-};

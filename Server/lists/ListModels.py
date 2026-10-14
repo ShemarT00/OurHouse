@@ -15,6 +15,5 @@ class ShoppingList:
     SHOP_HOUSEHOLD_ID: str
     SHOP_NAME: str
     SHOP_CREATED_BY: str
-    SHOP_IS_ACTIVE: bool = True
     SHOP_CREATED_AT: Optional[datetime] = None
     SHOP_UPDATED_AT: Optional[datetime] = None
