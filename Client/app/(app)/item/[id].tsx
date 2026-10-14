@@ -4,6 +4,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { useEffect } from 'react';
 import { useItems } from '@/hooks/useItems';
 import { Priority } from '@/types';
+import { PrioritySelector } from '@/components/atoms';
 
 interface EditItemForm {
   name: string;
@@ -11,8 +12,6 @@ interface EditItemForm {
   quantity: string;
   notes: string;
 }
-
-const PRIORITIES: Priority[] = ['LOW', 'MEDIUM', 'HIGH'];
 
 export default function ItemDetailScreen() {
   const router = useRouter();
@@ -26,11 +25,10 @@ export default function ItemDetailScreen() {
 
   const item = items.find((i) => String(i.OHID) === id);
 
-  const { control, handleSubmit, watch, setValue, reset } = useForm<EditItemForm>({
-    defaultValues: { name: '', priority: 'MEDIUM', quantity: '', notes: '' },
+  const { control, handleSubmit, reset } = useForm<EditItemForm>({
+    defaultValues: { name: '', priority: Priority.NONE, quantity: '', notes: '' },
   });
 
-  const selectedPriority = watch('priority');
 
   useEffect(() => {
     if (item) {
@@ -99,20 +97,14 @@ export default function ItemDetailScreen() {
       />
 
       <Text className="text-sm text-gray-500 mb-2">Priority</Text>
-      <View className="flex-row gap-2 mb-4">
-        {PRIORITIES.map((p) => (
-          <Pressable
-            key={p}
-            className={`flex-1 py-2 rounded-lg border items-center ${
-              selectedPriority === p ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
-            }`}
-            onPress={() => setValue('priority', p)}
-          >
-            <Text className={selectedPriority === p ? 'text-white font-semibold' : 'text-gray-600'}>
-              {p}
-            </Text>
-          </Pressable>
-        ))}
+      <View className="mb-4">
+        <Controller
+          control={control}
+          name="priority"
+          render={({ field: { onChange, value } }) => (
+            <PrioritySelector value={value} onChange={onChange} />
+          )}
+        />
       </View>
 
       <Text className="text-sm text-gray-500 mb-2">Quantity (optional)</Text>

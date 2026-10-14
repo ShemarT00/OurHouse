@@ -1,41 +1,32 @@
 from dataclasses import dataclass
-from enum import Enum
+from enum import IntEnum
 from typing import Optional
 
+from .base import TableModel
 
-class Priority(str, Enum):
-    LOW = "LOW"
-    MEDIUM = "MEDIUM"
-    HIGH = "HIGH"
-    UNPRIORITISED = "UNPRIORITISED"
+
+class Priority(IntEnum):
+    """How urgently an item is needed. Stored as ITEM_PRIORITY (0-3)."""
+
+    NONE = 0
+    LOW = 1
+    MEDIUM = 2
+    HIGH = 3
 
 
 @dataclass
-class Item:
-    OHID: int
+class Item(TableModel):
+    """Something a household needs, on one shopping list."""
+
+    TABLE = "ITEM"
+    PREFIX = "ITEM_"
+
     name: str
-    priority: Enum
-    shopping_list_id: str
-    store_id: Optional[str] = None
+    list_id: int
+    priority: Priority = Priority.NONE
+    store_id: Optional[int] = None
     quantity: Optional[int] = None
     notes: Optional[str] = None
-    
-
-    def __init__(
-        self,
-        OHID: int,
-        name: str,
-        priority: Enum,
-        shopping_list_id: str,
-        store_id: Optional[str] = None,
-        quantity: Optional[int] = None,
-        notes: Optional[str] = None,
-    ):
-        self.OHID = OHID
-        self.name = name
-        self.priority = priority
-        self.shopping_list_id = shopping_list_id
-        self.store_id = store_id
-        self.quantity = quantity
-        self.notes = notes
-
+    bought: bool = False
+    id: Optional[int] = None
+    created_at: Optional[str] = None

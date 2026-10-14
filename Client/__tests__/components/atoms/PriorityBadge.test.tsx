@@ -1,20 +1,16 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import { PriorityBadge } from '@/components/atoms/PriorityBadge';
+import { Priority } from '@/types';
 
 describe('PriorityBadge', () => {
-  it('renders "Low" for LOW priority', () => {
-    const { getByText } = render(<PriorityBadge priority="LOW" />);
-    expect(getByText('Low')).toBeTruthy();
-  });
-
-  it('renders "Medium" for MEDIUM priority', () => {
-    const { getByText } = render(<PriorityBadge priority="MEDIUM" />);
-    expect(getByText('Medium')).toBeTruthy();
-  });
-
-  it('renders "High" for HIGH priority', () => {
-    const { getByText } = render(<PriorityBadge priority="HIGH" />);
-    expect(getByText('High')).toBeTruthy();
+  it.each([
+    [Priority.NONE, 'No priority'],
+    [Priority.LOW, 'Low'],
+    [Priority.MEDIUM, 'Medium'],
+    [Priority.HIGH, 'High'],
+  ])('renders a badge for priority %i', (priority, label) => {
+    const { getByText } = render(<PriorityBadge priority={priority} />);
+    expect(getByText(label)).toBeTruthy();
   });
 });
