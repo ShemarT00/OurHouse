@@ -78,6 +78,10 @@ def invite_member(household_id):
         Invite record with invite ID
     """
     try:
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({"error": "Unauthorized"}), 401
+        
         data = request.get_json()
         
         if not data or "email" not in data:
