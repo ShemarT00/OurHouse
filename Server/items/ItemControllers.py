@@ -5,8 +5,8 @@ Business logic for shopping list item operations
 
 from typing import List, Optional, Dict, Any
 
-from Server.items.ItemDAO import ItemDAO
-from Server.schema import item
+from items.ItemDAO import ItemDAO
+from schema import item
 
 
 class ItemController:

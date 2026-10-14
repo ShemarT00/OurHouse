@@ -52,7 +52,7 @@ export default function HouseholdDetailScreen() {
           <Pressable
             className="border border-gray-200 rounded-xl p-4 mb-3"
             onPress={() =>
-              router.push({ pathname: `/(app)/list/${item.OHID}`, params: { householdId: id } })
+              router.push({ pathname: '/(app)/list/[id]', params: { id: item.OHID, householdId: id } })
             }
           >
             <Text className="text-base font-medium">{item.name}</Text>

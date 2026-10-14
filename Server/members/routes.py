@@ -5,14 +5,13 @@ API endpoints for household member management and invitations
 
 from flask import request, jsonify
 from members import members_bp
-from functools import wraps
-import jwt
+from auth.decorators import require_auth
 from datetime import datetime
 import uuid
-from os import getenv
 
 
 @members_bp.route("/households/<household_id>/members", methods=["GET"])
+@require_auth
 def list_household_members(household_id):
     """
     Get all members of a household
@@ -34,6 +33,7 @@ def list_household_members(household_id):
 
 
 @members_bp.route("/households/<household_id>/members/<member_id>", methods=["GET"])
+@require_auth
 def get_household_member(household_id, member_id):
     """
     Get specific member of a household
@@ -46,10 +46,6 @@ def get_household_member(household_id, member_id):
         Member object with user details
     """
     try:
-        current_user = get_current_user()
-        if not current_user:
-            return jsonify({"error": "Unauthorized"}), 401
-        
         # Verify user is member of this household
         # TODO: Query database to verify membership
         
@@ -67,6 +63,7 @@ def get_household_member(household_id, member_id):
 
 
 @members_bp.route("/households/<household_id>/members/invite", methods=["POST"])
+@require_auth
 def invite_member(household_id):
     """
     Invite a user to join household via email
@@ -112,6 +109,7 @@ def invite_member(household_id):
 
 
 @members_bp.route("/households/<household_id>/members/<member_id>", methods=["DELETE"])
+@require_auth
 def remove_member(household_id, member_id):
     """
     Remove member from household
@@ -124,10 +122,6 @@ def remove_member(household_id, member_id):
         Success message
     """
     try:
-        current_user = get_current_user()
-        if not current_user:
-            return jsonify({"error": "Unauthorized"}), 401
-        
         # Verify user is admin of this household
         # TODO: Query database to verify admin status
         
@@ -146,6 +140,7 @@ def remove_member(household_id, member_id):
 
 
 @members_bp.route("/members/invites", methods=["GET"])
+@require_auth
 def get_pending_invites():
     """
     Get all pending invitations for current user
@@ -157,10 +152,6 @@ def get_pending_invites():
         List of household invitations
     """
     try:
-        current_user = get_current_user()
-        if not current_user:
-            return jsonify({"error": "Unauthorized"}), 401
-        
         status = request.args.get("status", "pending").lower()
         valid_statuses = ["pending", "accepted", "declined"]
         
@@ -183,6 +174,7 @@ def get_pending_invites():
 
 
 @members_bp.route("/members/invites/<invite_id>/accept", methods=["POST"])
+@require_auth
 def accept_invite(invite_id):
     """
     Accept a household invitation
@@ -194,10 +186,6 @@ def accept_invite(invite_id):
         New member object
     """
     try:
-        current_user = get_current_user()
-        if not current_user:
-            return jsonify({"error": "Unauthorized"}), 401
-        
         # Get invite from database
         # TODO: Query database for invite
         invite = {}
@@ -226,6 +214,7 @@ def accept_invite(invite_id):
 
 
 @members_bp.route("/members/invites/<invite_id>/decline", methods=["POST"])
+@require_auth
 def decline_invite(invite_id):
     """
     Decline a household invitation
@@ -237,10 +226,6 @@ def decline_invite(invite_id):
         Success message
     """
     try:
-        current_user = get_current_user()
-        if not current_user:
-            return jsonify({"error": "Unauthorized"}), 401
-        
         # Get invite from database
         # TODO: Query database for invite
         invite = {}

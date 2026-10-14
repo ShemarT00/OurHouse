@@ -1,22 +1,31 @@
+# Local-only notes and diagrams
 CLAUDE.md
 UML.puml
 diagrams/
+.puml.*
+.claude/
+.vscode/
+
+# Secrets — commit the .env.example files instead
 .env
 .env.*
-Client/README.md
-database/README.md
-server/README.md
-diagrams/README.md
-api/README.md
-.puml.*
-config.json
-package.json
-package-lock.json
-tsconfig.json
+!.env.example
+
 *.log
+
+# Python
+__pycache__/
+*.pyc
+Server/venv/
+.pytest_cache/
+
 # JavaScript dependencies
 Client/node_modules/
-server/node_modules/
 
-# other generated content…
-requirements.txt
+# Expo generated native directories (managed workflow)
+Client/.expo/
+android/
+ios/
+
+# OneDrive sync conflict copies
+*-Shemar-Luna-PC*

@@ -4,7 +4,7 @@ Database operations for users
 """
 
 from typing import List, Optional, Dict, Any
-from supabase_client import supabase
+from supabase_client import get_admin_client
 from flask import abort
 
 
@@ -25,7 +25,7 @@ class UserDAO:
     def create_user(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Insert a new user row into the USER table and return it."""
         response = (
-            supabase.table("USER")
+            get_admin_client().table("USER")
             .insert({
                 "USER_ID": data["USER_ID"],
                 "USER_EMAIL": data["USER_EMAIL"],

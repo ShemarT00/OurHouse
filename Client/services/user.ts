@@ -24,7 +24,7 @@ export const getUserProfile = async (): Promise<ApiResponse<User>> => {
  * Get user by OHID
  */
 export const getUser = async (OHID: string): Promise<ApiResponse<User>> => {
-  return apiGet<User>(API_ENDPOINTS.USERS.GET(OHID));
+  return apiGet<User>(API_ENDPOINTS.USERS.GET_USER(OHID));
 };
 
 /**

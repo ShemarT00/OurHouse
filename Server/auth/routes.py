@@ -1,5 +1,5 @@
 from flask import request, abort
-from supabase_client import supabase
+from supabase_client import get_admin_client
 from users.UserController import UserController
 
 from . import auth_bp
@@ -17,7 +17,7 @@ def signup():
     token = auth_header.split(" ", 1)[1]
 
     # Verify the Supabase JWT and retrieve the authenticated user's ID
-    user_response = supabase.auth.get_user(token)
+    user_response = get_admin_client().auth.get_user(token)
     if not user_response or not user_response.user:
         abort(401)
 
