@@ -1,17 +1,17 @@
 from dataclasses import dataclass
+from typing import Optional
+
+from .base import TableModel
 
 
 @dataclass
-class ShoppingList:
-    OHID: int
+class ShoppingList(TableModel):
+    """A named list of items belonging to a household."""
+
+    TABLE = "SHOPPINGLIST"
+    PREFIX = "SHOP_"
+
     name: str
-    household_id: str
-
-def __init__(self, OHID: int, name: str, household_id: str):
-    self.OHID = OHID
-    self.name = name
-    self.household_id = household_id
-
-def getHouseholdID(self) -> str:
-    return self.household_id
-
+    household_id: int
+    id: Optional[int] = None
+    created_at: Optional[str] = None
