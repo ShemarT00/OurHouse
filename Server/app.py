@@ -3,6 +3,16 @@ OurHouse Server Application
 Flask application with Blueprint-based architecture
 """
 
+# Verify TLS certificates against the operating system's trust store (needed on
+# machines where HTTPS goes through a proxy or antivirus with its own root CA).
+# Must run before anything opens an HTTPS connection to Supabase.
+try:
+    import truststore
+
+    truststore.inject_into_ssl()
+except ImportError:  # Python < 3.10: fall back to certifi's bundled CAs
+    pass
+
 from flask import Flask, jsonify
 from flask_cors import CORS
 from werkzeug.exceptions import HTTPException
@@ -34,7 +44,6 @@ def create_app(config=None):
     CORS(app, resources={r"/api/*": {"origins": os.getenv("CORS_ORIGINS", "*").split(",")}})
 
     # Register blueprints
-    from auth import auth_bp
     from users import users_bp
     from households import households_bp
     from members import members_bp
@@ -42,8 +51,6 @@ def create_app(config=None):
     from items import items_bp
     from notifications import notifications_bp
 
-# Blueprints are registered in a specific order to ensure that authentication is available for all routes
-    app.register_blueprint(auth_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(households_bp)
     app.register_blueprint(members_bp)

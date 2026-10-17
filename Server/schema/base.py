@@ -1,10 +1,16 @@
 """
 Base class for domain models that mirror a database table.
 
-Each model sets `TABLE` and `PREFIX`; every dataclass field maps to the column
-`PREFIX + FIELD.upper()` (e.g. Item.list_id -> ITEM_LIST_ID). These models are
-the single source of truth: client types are generated from them
-(scripts/gen_client_types.py) and tests check them against the migrations.
+Each model sets `TABLE` and `PREFIX` as written in the migrations; every
+dataclass field maps to the column `PREFIX + FIELD.upper()` (e.g. Item.list_id
+-> ITEM_LIST_ID). These models are the single source of truth: client types are
+generated from them (scripts/gen_client_types.py) and tests check them against
+the migrations.
+
+Postgres folds unquoted identifiers to lowercase, so the migrations' ITEM_LIST_ID
+is really the column item_list_id, and only quoted tables ("USER") keep their
+case. `db_table()` and `column()` return those real names, which is what
+Supabase expects in queries and returns in rows.
 """
 
 from dataclasses import fields
@@ -17,14 +23,23 @@ T = TypeVar("T", bound="TableModel")
 SERVER_GENERATED = ("id", "created_at")
 
 
+# Tables created with a quoted name in the migrations (reserved words)
+QUOTED_TABLES = ("USER",)
+
+
 class TableModel:
     TABLE: ClassVar[str]
     PREFIX: ClassVar[str]
 
     @classmethod
+    def db_table(cls) -> str:
+        """Table name as stored by Postgres (and used by Supabase queries)."""
+        return cls.TABLE if cls.TABLE in QUOTED_TABLES else cls.TABLE.lower()
+
+    @classmethod
     def column(cls, field_name: str) -> str:
-        """Database column for a field name."""
-        return cls.PREFIX + field_name.upper()
+        """Database column for a field name, as stored by Postgres."""
+        return (cls.PREFIX + field_name).lower()
 
     @classmethod
     def columns(cls) -> Tuple[str, ...]:

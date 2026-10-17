@@ -202,8 +202,9 @@ const handleApiError = <T>(error: unknown): ApiResponse<T> => {
  * Useful for TanStack Query
  */
 export const throwIfError = <T>(response: ApiResponse<T>): T => {
-  if (!response.success || !response.data) {
+  if (!response.success) {
     throw new Error(response.error?.message || "Unknown error occurred");
   }
-  return response.data;
+  // Successful void calls (logout, deletes) carry no data
+  return response.data as T;
 };

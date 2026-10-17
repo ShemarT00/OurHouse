@@ -27,10 +27,9 @@ export {
   requestPasswordReset,
   resetPassword,
   getCurrentSession,
-  refreshAuthToken,
   type LoginCredentials,
   type SignupData,
-  type AuthResponse,
+  type SignupResult,
 } from "./auth";
 
 // User Service

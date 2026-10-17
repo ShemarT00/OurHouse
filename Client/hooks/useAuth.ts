@@ -48,13 +48,13 @@ export const useAuth = () => {
   }, []);
 
   /**
-   * Mutation to log in a user with email and password
-   * Handles the API call and updates the authentication state based on the response.
-   * On success, the auth state will be updated by the onAuthStateChange listener.
-   * On error, it will throw the error to be handled by the caller.
+   * Mutation to log in a user with email and password.
+   * On success, the auth state is updated by the onAuthStateChange listener.
+   * On failure (e.g. wrong password) it rejects, so loginAsync throws and
+   * loginMutation.error holds the message to show.
    */
   const loginMutation = useMutation({
-    mutationFn: (credentials: LoginCredentials) => loginWithEmail(credentials),
+    mutationFn: async (credentials: LoginCredentials) => throwIfError(await loginWithEmail(credentials)),
   });
 
   const signupMutation = useMutation({
@@ -62,11 +62,11 @@ export const useAuth = () => {
   });
 
   const logoutMutation = useMutation({
-    mutationFn: logout,
+    mutationFn: async () => throwIfError(await logout()),
   });
 
   const forgotPasswordMutation = useMutation({
-    mutationFn: (email: string) => requestPasswordReset(email),
+    mutationFn: async (email: string) => throwIfError(await requestPasswordReset(email)),
   });
 
   return {

@@ -1,4 +1,5 @@
-import { Text, TextInput, Pressable, ActivityIndicator, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
+import { useState } from 'react';
+import { View, Text, TextInput, Pressable, ActivityIndicator, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,6 +14,8 @@ interface RegisterForm {
 export default function RegisterScreen() {
   const router = useRouter();
   const { signupAsync, signupMutation } = useAuth();
+  // Email address awaiting confirmation; set when Supabase needs the user to confirm before logging in
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
 
   const { control, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
     defaultValues: { firstName: '', lastName: '', email: '', password: '' },
@@ -20,12 +23,33 @@ export default function RegisterScreen() {
 
   const onSubmit = async (data: RegisterForm) => {
     try {
-      await signupAsync(data);
-      router.replace('/(app)');
+      const { needsConfirmation } = await signupAsync(data);
+      if (needsConfirmation) {
+        setPendingEmail(data.email);
+      } else {
+        router.replace('/(app)');
+      }
     } catch {
       // signupMutation.isError is now true; error renders below the form
     }
   };
+
+  if (pendingEmail) {
+    return (
+      <View className="flex-1 justify-center px-6 bg-white">
+        <Text className="text-2xl font-bold mb-4 text-center">Check your email</Text>
+        <Text className="text-base text-gray-600 mb-8 text-center">
+          We sent a confirmation link to {pendingEmail}. Confirm your account, then sign in.
+        </Text>
+        <Pressable
+          className="bg-blue-600 rounded-lg py-3 items-center"
+          onPress={() => router.replace('/(auth)/login')}
+        >
+          <Text className="text-white font-semibold text-base">Go to Sign In</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView className="flex-1 bg-white" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
