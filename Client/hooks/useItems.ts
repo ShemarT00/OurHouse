@@ -67,7 +67,7 @@ export const useItems = (householdId: string, listId: string) => {
       queryClient.setQueryData<Item[]>(itemsKey(householdId, listId), (old = []) =>
         old.map(item =>
           item.OHID === Number(itemOHID)
-            ? { ...item, isCompleted: !item.isCompleted }
+            ? { ...item, bought: !item.bought }
             : item
         )
       );

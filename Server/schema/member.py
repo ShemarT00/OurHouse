@@ -1,30 +1,23 @@
 from dataclasses import dataclass
+from typing import Optional
+
+from .base import TableModel
+
 
 @dataclass
-class Member:
-    OHID: int
-    user_id: str
-    household_id: str
+class Member(TableModel):
+    """Joins a User to a Household."""
+
+    TABLE = "MEMBER"
+    PREFIX = "MEMB_"
+
+    user_id: int
+    household_id: int
     first_name: str
     last_name: str
+    is_admin: bool = False
+    id: Optional[int] = None
+    created_at: Optional[str] = None
 
-def __init__(
-    self,
-    OHID: int,
-    user_id: str,
-    household_id: str,
-    first_name: str,
-    last_name: str,
-):
-    self.OHID = OHID
-    self.user_id = user_id
-    self.household_id = household_id
-    self.first_name = first_name
-    self.last_name = last_name
-
-def getFullName(self) -> str:
-    return f"{self.first_name} {self.last_name}"
-
-def isAdmin(self) -> bool:
-    # Placeholder for admin check logic, can be implemented based on specific requirements
-    return False
+    def full_name(self) -> str:
+        return f"{self.first_name} {self.last_name}"

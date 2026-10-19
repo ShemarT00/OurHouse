@@ -80,7 +80,6 @@ export {
   deleteItem,
   type CreateItemData,
   type UpdateItemData,
-  type Priority,
 } from "./item";
 
 // Notification Service

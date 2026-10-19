@@ -5,16 +5,14 @@
 
 import { apiGet, apiPost, apiPut, apiDelete, ApiResponse } from "./api";
 import { API_ENDPOINTS } from "./config";
-import { Item } from "@/types";
-
-export type Priority = "LOW" | "MEDIUM" | "HIGH";
+import type { Item, Priority } from "@/types";
 
 export interface CreateItemData {
   name: string;
   priority?: Priority;
   quantity?: number;
   notes?: string;
-  storeId?: string;
+  storeId?: number | null;
 }
 
 export interface UpdateItemData {
@@ -22,8 +20,8 @@ export interface UpdateItemData {
   priority?: Priority;
   quantity?: number;
   notes?: string;
-  storeId?: string;
-  completed?: boolean;
+  storeId?: number | null;
+  bought?: boolean;
 }
 
 /**

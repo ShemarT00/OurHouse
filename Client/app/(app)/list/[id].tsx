@@ -2,7 +2,8 @@ import { View, Text, FlatList, Pressable, ActivityIndicator } from 'react-native
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useList } from '@/hooks/useLists';
 import { useItems } from '@/hooks/useItems';
-import { Item } from '@/types';
+import type { Item } from '@/types';
+import { PriorityBadge } from '@/components/atoms';
 
 export default function ListDetailScreen() {
   const router = useRouter();
@@ -52,17 +53,19 @@ export default function ListDetailScreen() {
           >
             <Pressable // Checkbox to toggle item completion status, shows a checkmark when completed and strikes through the item name
               className={`w-5 h-5 rounded border mr-3 items-center justify-center ${
-                item.isCompleted ? 'bg-blue-600 border-blue-600' : 'border-gray-400'
+                item.bought ? 'bg-blue-600 border-blue-600' : 'border-gray-400'
               }`}
               onPress={() => toggleItem(String(item.OHID))} // Toggle item completion status when pressed
             >
-              {item.isCompleted && <Text className="text-white text-xs">✓</Text>}
+              {item.bought && <Text className="text-white text-xs">✓</Text>}
             </Pressable>
             <View className="flex-1">
-              <Text className={`text-base ${item.isCompleted ? 'line-through text-gray-400' : ''}`}>
+              <Text className={`text-base ${item.bought ? 'line-through text-gray-400' : ''}`}>
                 {item.name}
               </Text>
-              <Text className="text-xs text-gray-400 mt-0.5">{item.priority}</Text>
+              <View className="mt-1 self-start">
+                <PriorityBadge priority={item.priority} />
+              </View>
             </View>
           </Pressable>
         )}

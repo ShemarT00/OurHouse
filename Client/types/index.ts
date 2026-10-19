@@ -1,7 +1,3 @@
-export * from './user';
-export * from './household';
-export * from './member';
-export * from './shoppingList';
-export * from './item';
-export * from './store';
-export * from './notification';
+// Domain types are generated from the server models (Server/schema).
+// Re-run `python Server/scripts/gen_client_types.py` after changing them.
+export * from './generated';

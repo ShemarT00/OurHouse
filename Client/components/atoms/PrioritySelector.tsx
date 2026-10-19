@@ -1,12 +1,13 @@
 import { View, Text, Pressable } from 'react-native';
-import type { Priority } from '../../types';
+import { Priority } from '@/types';
 
-const PRIORITIES: Priority[] = ['LOW', 'MEDIUM', 'HIGH'];
+const PRIORITIES: Priority[] = [Priority.NONE, Priority.LOW, Priority.MEDIUM, Priority.HIGH];
 
 const priorityStyles: Record<Priority, { active: string; activeText: string; label: string }> = {
-  LOW: { active: 'bg-green-500 border-green-500', activeText: 'text-white', label: 'Low' },
-  MEDIUM: { active: 'bg-yellow-500 border-yellow-500', activeText: 'text-white', label: 'Medium' },
-  HIGH: { active: 'bg-red-500 border-red-500', activeText: 'text-white', label: 'High' },
+  [Priority.NONE]: { active: 'bg-gray-500 border-gray-500', activeText: 'text-white', label: 'None' },
+  [Priority.LOW]: { active: 'bg-green-500 border-green-500', activeText: 'text-white', label: 'Low' },
+  [Priority.MEDIUM]: { active: 'bg-yellow-500 border-yellow-500', activeText: 'text-white', label: 'Medium' },
+  [Priority.HIGH]: { active: 'bg-red-500 border-red-500', activeText: 'text-white', label: 'High' },
 };
 
 interface PrioritySelectorProps {

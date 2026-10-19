@@ -3,6 +3,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { useItems } from '@/hooks/useItems';
 import { Priority } from '@/types';
+import { PrioritySelector } from '@/components/atoms';
 
 /* Form data structure for creating a new item, includes name, priority, quantity, and notes */
 
@@ -13,8 +14,6 @@ interface CreateItemForm {
   notes: string;
 }
 
-const PRIORITIES: Priority[] = ['LOW', 'MEDIUM', 'HIGH']; // Available priority options for items
-
 /* Screen component for creating a new item in a shopping list, includes form handling and submission logic */
 
 export default function CreateItemScreen() { 
@@ -23,11 +22,10 @@ export default function CreateItemScreen() {
   const { addItemAsync, createMutation } = useItems(householdId, listId); // Hook for managing items, provides function to add item and mutation state
 
   // Form handling using react-hook-form, sets up default values and tracks form state
-  const { control, handleSubmit, watch, setValue } = useForm<CreateItemForm>({
-    defaultValues: { name: '', priority: 'MEDIUM', quantity: '', notes: '' },
+  const { control, handleSubmit } = useForm<CreateItemForm>({
+    defaultValues: { name: '', priority: Priority.NONE, quantity: '', notes: '' },
   });
 
-  const selectedPriority = watch('priority'); // Watch the priority field to update UI based on selected priority
 
   const onSubmit = async (data: CreateItemForm) => {
     await addItemAsync({
@@ -63,20 +61,14 @@ export default function CreateItemScreen() {
       />
 
       <Text className="text-sm text-gray-500 mb-2">Priority</Text>
-      <View className="flex-row gap-2 mb-4">
-        {PRIORITIES.map((p) => (
-          <Pressable
-            key={p}
-            className={`flex-1 py-2 rounded-lg border items-center ${
-              selectedPriority === p ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
-            }`}
-            onPress={() => setValue('priority', p)}
-          >
-            <Text className={selectedPriority === p ? 'text-white font-semibold' : 'text-gray-600'}>
-              {p}
-            </Text>
-          </Pressable>
-        ))}
+      <View className="mb-4">
+        <Controller
+          control={control}
+          name="priority"
+          render={({ field: { onChange, value } }) => (
+            <PrioritySelector value={value} onChange={onChange} />
+          )}
+        />
       </View>
 
       <Text className="text-sm text-gray-500 mb-2">Quantity (optional)</Text>
