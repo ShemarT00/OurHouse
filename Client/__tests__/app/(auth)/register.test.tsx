@@ -32,7 +32,7 @@ describe('RegisterScreen — Register button', () => {
   });
 
   it('calls signupAsync with the entered form data when Register is pressed', async () => {
-    mockSignupAsync.mockResolvedValueOnce(undefined);
+    mockSignupAsync.mockResolvedValueOnce({ needsConfirmation: false });
     const { getByPlaceholderText, getByText } = render(<RegisterScreen />);
 
     fireEvent.changeText(getByPlaceholderText('First Name'), 'Jane');
@@ -52,7 +52,7 @@ describe('RegisterScreen — Register button', () => {
   });
 
   it('navigates to (app) after successful registration', async () => {
-    mockSignupAsync.mockResolvedValueOnce(undefined);
+    mockSignupAsync.mockResolvedValueOnce({ needsConfirmation: false });
     const { getByPlaceholderText, getByText } = render(<RegisterScreen />);
 
     fireEvent.changeText(getByPlaceholderText('First Name'), 'Jane');
@@ -64,6 +64,23 @@ describe('RegisterScreen — Register button', () => {
     await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith('/(app)');
     });
+  });
+
+  it('asks the user to confirm their email when Supabase requires it', async () => {
+    mockSignupAsync.mockResolvedValueOnce({ needsConfirmation: true });
+    const { getByPlaceholderText, getByText, findByText } = render(<RegisterScreen />);
+
+    fireEvent.changeText(getByPlaceholderText('First Name'), 'Jane');
+    fireEvent.changeText(getByPlaceholderText('Last Name'), 'Doe');
+    fireEvent.changeText(getByPlaceholderText('Email'), 'jane@example.com');
+    fireEvent.changeText(getByPlaceholderText('Password'), 'password123');
+    fireEvent.press(getByText('Register'));
+
+    expect(await findByText('Check your email')).toBeTruthy();
+    expect(mockReplace).not.toHaveBeenCalledWith('/(app)');
+
+    fireEvent.press(getByText('Go to Sign In'));
+    expect(mockReplace).toHaveBeenCalledWith('/(auth)/login');
   });
 
   it('does not call signupAsync when required fields are empty', async () => {

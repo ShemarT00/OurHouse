@@ -17,8 +17,12 @@ export default function LoginScreen() {
   });
 
   const onSubmit = async (data: LoginForm) => {
-    await loginAsync(data);
-    router.replace('/(app)');
+    try {
+      await loginAsync(data);
+      router.replace('/(app)');
+    } catch {
+      // loginMutation.isError is now true; the error renders above the button
+    }
   };
 
   return (

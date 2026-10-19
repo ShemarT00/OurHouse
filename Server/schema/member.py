@@ -11,7 +11,7 @@ class Member(TableModel):
     TABLE = "MEMBER"
     PREFIX = "MEMB_"
 
-    user_id: int
+    user_id: str
     household_id: int
     first_name: str
     last_name: str

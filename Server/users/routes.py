@@ -3,11 +3,16 @@ Users Routes
 API endpoints for user profile management
 """
 
-from flask import abort
+from flask import abort, g
+from auth.decorators import require_auth
 from users import users_bp
+from users.UserController import UserController
+
+_user_controller = UserController()
 
 
 @users_bp.route("/profile", methods=["GET"])
+@require_auth
 def get_user_profile():
     """
     Get current user profile
@@ -15,7 +20,10 @@ def get_user_profile():
     Returns:
         User object with profile information
     """
-    abort(501)
+    user = _user_controller.get_current_user(g.token, g.user.id)
+    if user is None:
+        abort(404)
+    return user, 200
 
 
 @users_bp.route("/profile", methods=["PUT"])

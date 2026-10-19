@@ -3,50 +3,25 @@ Users DAO (Data Access Object)
 Database operations for users
 """
 
-from typing import List, Optional, Dict, Any
-from supabase_client import get_admin_client
-from flask import abort
+from typing import Optional
+
+from schema import User
+from supabase_client import get_user_client
 
 
 class UserDAO:
     """Handle database operations for users"""
 
-    def __init__(self):
-        pass
-
-    def fetch_user(self, user_id: str) -> Optional[Dict[str, Any]]:
-        """Query a specific user"""
-        pass
-
-    def fetch_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
-        """Query a user by email address"""
-        pass
-
-    def create_user(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Insert a new user row into the USER table and return it."""
+    def fetch_user(self, token: str, user_id: str) -> Optional[User]:
+        """Query a user as the signed-in user, so Row Level Security applies."""
         response = (
-            get_admin_client().table("USER")
-            .insert({
-                "USER_ID": data["USER_ID"],
-                "USER_EMAIL": data["USER_EMAIL"],
-                "USER_NAME": data["USER_NAME"],
-            })
+            get_user_client(token)
+            .table(User.db_table())
+            .select("*")
+            .eq(User.column("id"), user_id)
+            .limit(1)
             .execute()
         )
-
         if not response.data:
-            abort(500)
-
-        return response.data[0]
-    
-    def update_user(self, user_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Update a user record"""
-        pass
-    
-    def delete_user(self, user_id: str) -> bool:
-        """Delete a user"""
-        pass
-    
-    def search_users(self, query: str) -> List[Dict[str, Any]]:
-        """Search users by email or name"""
-        pass
+            return None
+        return User.from_row(response.data[0])

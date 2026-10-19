@@ -1,10 +1,13 @@
 /**
  * Authentication API Service
- * Handles login, signup, password reset, and other auth operations
+ * Sign-up, login, logout and password reset go straight to Supabase Auth.
+ * The "USER" profile row is created by a database trigger at sign-up
+ * (database/migrations/004_auth_users.sql), so there is no backend call here.
  */
 
-import { apiPost, apiGet, ApiResponse } from "./api";
-import { API_ENDPOINTS, supabase } from "./config";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
+import type { ApiResponse } from "./api";
+import { supabase } from "./config";
 
 export interface LoginCredentials {
   email: string;
@@ -18,144 +21,79 @@ export interface SignupData {
   lastName: string;
 }
 
-export interface AuthResponse {
-  OHID: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  accessToken: string;
-  refreshToken: string;
+export interface SignupResult {
+  /** True when Supabase requires the user to confirm their email before logging in */
+  needsConfirmation: boolean;
 }
 
-export interface ForgotPasswordRequest {
-  email: string;
-}
+/** Supabase error messages rewritten for people using the app */
+const FRIENDLY_AUTH_MESSAGES: Record<string, string> = {
+  "Invalid login credentials": "Incorrect email or password.",
+  "Email not confirmed": "Check your email to confirm your account, then sign in.",
+  "User already registered": "An account with this email already exists.",
+};
 
-export interface ResetPasswordRequest {
-  token: string;
-  password: string;
-}
+const authFailure = <T>(error: unknown, fallback: string): ApiResponse<T> => {
+  const message = error instanceof Error ? error.message : fallback;
+  return {
+    success: false,
+    error: { message: FRIENDLY_AUTH_MESSAGES[message] ?? message, code: "AUTH_ERROR" },
+  };
+};
 
 /**
  * Login with email and password via Supabase
  */
 export const loginWithEmail = async (
   credentials: LoginCredentials
-): Promise<ApiResponse<AuthResponse>> => {
+): Promise<ApiResponse<SupabaseUser>> => {
   try {
     const { data, error } = await supabase.auth.signInWithPassword(credentials);
-
     if (error) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: "AUTH_ERROR",
-        },
-      };
+      return authFailure(error, "Login failed");
     }
-
-    if (!data.user?.email) {
-      return {
-        success: false,
-        error: { message: "No user data returned", code: "AUTH_ERROR" },
-      };
-    }
-
-    // Get additional user profile from backend
-    const profileResponse = await apiGet<AuthResponse>(
-      API_ENDPOINTS.AUTH.LOGIN
-    );
-
-    return profileResponse;
+    return { success: true, data: data.user };
   } catch (error) {
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : "Login failed",
-        code: "AUTH_ERROR",
-      },
-    };
+    return authFailure(error, "Login failed");
   }
 };
 
 /**
- * Sign up with email and password
+ * Sign up with email and password. First and last name travel as user
+ * metadata; the database trigger copies them into the "USER" row.
  */
 export const signupWithEmail = async (
   data: SignupData
-): Promise<ApiResponse<AuthResponse>> => {
+): Promise<ApiResponse<SignupResult>> => {
   try {
-    // First, sign up with Supabase
-    const { data: authData, error: authError } =
-      await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-      });
-
-    if (authError) {
-      return {
-        success: false,
-        error: {
-          message: authError.message,
-          code: "AUTH_ERROR",
-        },
-      };
-    }
-
-    // Then create user profile on backend
-    const signupResponse = await apiPost<AuthResponse>(
-      API_ENDPOINTS.AUTH.SIGNUP,
-      {
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
-      }
-    );
-
-    return signupResponse;
-  } catch (error) {
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : "Signup failed",
-        code: "AUTH_ERROR",
+    const { data: authData, error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        data: { first_name: data.firstName.trim(), last_name: data.lastName.trim() },
       },
-    };
+    });
+    if (error) {
+      return authFailure(error, "Signup failed");
+    }
+    return { success: true, data: { needsConfirmation: !authData.session } };
+  } catch (error) {
+    return authFailure(error, "Signup failed");
   }
 };
 
 /**
- * Logout and clear session
+ * Logout and clear the stored session
  */
 export const logout = async (): Promise<ApiResponse<void>> => {
   try {
     const { error } = await supabase.auth.signOut();
-
     if (error) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: "AUTH_ERROR",
-        },
-      };
+      return authFailure(error, "Logout failed");
     }
-
-    // Also notify backend of logout
-    await apiPost(API_ENDPOINTS.AUTH.LOGOUT);
-
-    return {
-      success: true,
-    };
+    return { success: true };
   } catch (error) {
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : "Logout failed",
-        code: "AUTH_ERROR",
-      },
-    };
+    return authFailure(error, "Logout failed");
   }
 };
 
@@ -169,62 +107,29 @@ export const requestPasswordReset = async (
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: "ourhouse://reset-password",
     });
-
     if (error) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: "AUTH_ERROR",
-        },
-      };
+      return authFailure(error, "Password reset failed");
     }
-
     return { success: true };
   } catch (error) {
-    return {
-      success: false,
-      error: {
-        message:
-          error instanceof Error ? error.message : "Password reset failed",
-        code: "AUTH_ERROR",
-      },
-    };
+    return authFailure(error, "Password reset failed");
   }
 };
 
 /**
- * Reset password with token
+ * Set a new password for the signed-in user (after following the reset link)
  */
 export const resetPassword = async (
-  token: string,
   newPassword: string
 ): Promise<ApiResponse<void>> => {
   try {
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) {
-      return {
-        success: false,
-        error: {
-          message: error.message,
-          code: "AUTH_ERROR",
-        },
-      };
+      return authFailure(error, "Password update failed");
     }
-
     return { success: true };
   } catch (error) {
-    return {
-      success: false,
-      error: {
-        message:
-          error instanceof Error ? error.message : "Password update failed",
-        code: "AUTH_ERROR",
-      },
-    };
+    return authFailure(error, "Password update failed");
   }
 };
 
@@ -234,43 +139,4 @@ export const resetPassword = async (
 export const getCurrentSession = async () => {
   const { data, error } = await supabase.auth.getSession();
   return { session: data?.session, error };
-};
-
-/**
- * Refresh auth token
- */
-export const refreshAuthToken = async (): Promise<ApiResponse<AuthResponse>> => {
-  try {
-    const { data, error } = await supabase.auth.refreshSession();
-
-    if (error || !data.session) {
-      return {
-        success: false,
-        error: {
-          message: error?.message || "Failed to refresh token",
-          code: "AUTH_ERROR",
-        },
-      };
-    }
-
-    return {
-      success: true,
-      data: {
-        OHID: data.session.user.id,
-        email: data.session.user.email || "",
-        firstName: "",
-        lastName: "",
-        accessToken: data.session.access_token,
-        refreshToken: data.session.refresh_token || "",
-      },
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: {
-        message: error instanceof Error ? error.message : "Token refresh failed",
-        code: "AUTH_ERROR",
-      },
-    };
-  }
 };

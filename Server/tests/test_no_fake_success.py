@@ -12,7 +12,7 @@ IMPLEMENTED = {
     ("GET", "/health"),
     ("GET", "/api/health"),
     ("GET", "/api/version"),
-    ("POST", "/api/auth/signup"),
+    ("GET", "/api/users/profile"),
 }
 
 # Endpoints that check authentication before reaching their stub body

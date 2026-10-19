@@ -10,10 +10,9 @@ export enum Priority {
 
 /** Table USER (columns USER_*) */
 export interface User {
-  OHID: number;
+  OHID: string;
   name: string;
   email: string;
-  inviteCode: string;
   createdAt: string;
 }
 
@@ -27,7 +26,7 @@ export interface Household {
 /** Table MEMBER (columns MEMB_*) */
 export interface Member {
   OHID: number;
-  userId: number;
+  userId: string;
   householdId: number;
   firstName: string;
   lastName: string;
@@ -66,7 +65,7 @@ export interface Store {
 /** Table NOTIFICATION (columns NOTI_*) */
 export interface Notification {
   OHID: number;
-  userId: number;
+  userId: string;
   type: string;
   message: string;
   typeDesc: string | null;

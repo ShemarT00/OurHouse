@@ -11,7 +11,7 @@ class Notification(TableModel):
     TABLE = "NOTIFICATION"
     PREFIX = "NOTI_"
 
-    user_id: int
+    user_id: str
     type: str
     message: str
     type_desc: Optional[str] = None
