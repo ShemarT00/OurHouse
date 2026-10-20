@@ -27,12 +27,20 @@ export default function HomeScreen() {
     <View className="flex-1 bg-white">
       <View className="px-6 pt-14 pb-4 flex-row items-center justify-between">
         <Text className="text-2xl font-bold">My Households</Text>
-        <Pressable
-          className="bg-blue-600 px-4 py-2 rounded-lg"
-          onPress={() => router.push('/(app)/household/create')}
-        >
-          <Text className="text-white font-semibold">+ New</Text>
-        </Pressable>
+        <View className="flex-row gap-2">
+          <Pressable
+            className="border border-blue-600 px-4 py-2 rounded-lg active:bg-blue-50"
+            onPress={() => router.push('/(app)/household/join')}
+          >
+            <Text className="text-blue-600 font-semibold">Join</Text>
+          </Pressable>
+          <Pressable
+            className="bg-blue-600 px-4 py-2 rounded-lg active:bg-blue-700"
+            onPress={() => router.push('/(app)/household/create')}
+          >
+            <Text className="text-white font-semibold">+ New</Text>
+          </Pressable>
+        </View>
       </View>
 
       <FlatList
@@ -52,7 +60,7 @@ export default function HomeScreen() {
         ListEmptyComponent={
           <View className="items-center mt-20">
             <Text className="text-gray-400 text-base">No households yet.</Text>
-            <Text className="text-gray-400 text-sm mt-1">Create one to get started.</Text>
+            <Text className="text-gray-400 text-sm mt-1">Create one, or join one with an invite code.</Text>
           </View>
         }
       />

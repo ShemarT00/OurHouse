@@ -46,6 +46,32 @@ def create_household():
     return household, 201
 
 
+@households_bp.route("/join", methods=["POST"])
+@require_auth
+def join_household():
+    """
+    Join a household using its invite code; the caller becomes a member
+    
+    Request body:
+        - code (str): Household invite code (any case)
+    
+    Returns:
+        The joined household (200, also when already a member);
+        404 if no household has that code
+    """
+    body = request.get_json(silent=True) or {}
+    code = body.get("code")
+    if not isinstance(code, str):
+        abort(400, description="code is required")
+    try:
+        household = _household_controller.join_household(g.token, code)
+    except ValueError as e:
+        abort(400, description=str(e))
+    if household is None:
+        abort(404, description="No household has that invite code")
+    return household, 200
+
+
 @households_bp.route("/<int:household_id>", methods=["GET"])
 @require_auth
 def get_household(household_id):

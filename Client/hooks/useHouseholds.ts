@@ -3,9 +3,11 @@ import {
   getHouseholds,
   getHousehold,
   createHousehold as createHouseholdRequest,
+  joinHousehold as joinHouseholdRequest,
   updateHousehold as updateHouseholdRequest,
   deleteHousehold as deleteHouseholdRequest,
   CreateHouseholdData,
+  JoinHouseholdData,
   UpdateHouseholdData,
 } from '@/services/household';
 import { throwIfError } from '@/services/api';
@@ -38,6 +40,16 @@ export const useHouseholds = () => {
       queryClient.invalidateQueries({ queryKey: HOUSEHOLDS_KEY }); // Invalidate households query to refetch the updated list
     },
   });
+  /**
+   * Mutation to join a household with its invite code
+   */
+  const joinMutation = useMutation({
+    mutationFn: (data: JoinHouseholdData) => joinHouseholdRequest(data).then(throwIfError),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: HOUSEHOLDS_KEY });
+    },
+  });
+
   /**
    * Mutation to update an existing household
    */
@@ -79,14 +91,18 @@ export const useHouseholds = () => {
     isRefetching: query.isRefetching,
     createHousehold: createMutation.mutate,
     createHouseholdAsync: createMutation.mutateAsync,
+    joinHousehold: joinMutation.mutate,
+    joinHouseholdAsync: joinMutation.mutateAsync,
     updateHousehold: updateMutation.mutate,
     updateHouseholdAsync: updateMutation.mutateAsync,
     deleteHousehold: deleteMutation.mutate,
     deleteHouseholdAsync: deleteMutation.mutateAsync,
     isCreating: createMutation.isPending,
+    isJoining: joinMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
     createMutation,
+    joinMutation,
     updateMutation,
     deleteMutation,
   };

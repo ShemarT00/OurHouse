@@ -48,6 +48,8 @@ export const useHouseholdMembers = (householdId: string) => {
     members: query.data ?? [],
     isLoading: query.isLoading,
     error: query.error,
+    refetch: query.refetch,
+    isRefetching: query.isRefetching,
     removeMember: removeMutation.mutate,
     removeMemberAsync: removeMutation.mutateAsync,
     isRemoving: removeMutation.isPending,
