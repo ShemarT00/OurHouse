@@ -17,11 +17,4 @@ class UserController:
     def get_current_user(self, token: str, user_id: str) -> Optional[Dict[str, Any]]:
         """Profile of the signed-in user, shaped for the client, or None if it does not exist."""
         user = self._dao.fetch_user(token, user_id)
-        if user is None:
-            return None
-        return {
-            "OHID": user.id,
-            "name": user.name,
-            "email": user.email,
-            "createdAt": user.created_at,
-        }
+        return None if user is None else user.to_api()

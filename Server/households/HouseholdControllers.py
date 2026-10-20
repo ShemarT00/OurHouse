@@ -3,35 +3,31 @@ Households Controllers
 Business logic for household operations
 """
 
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
+
+from .HouseholdDAO import HouseholdDAO
+
+MAX_NAME_LENGTH = 255
 
 
 class HouseholdController:
     """Handle household business logic and operations"""
-    
-    def __init__(self):
-        pass
-    
-    def get_households(self, user_id: str) -> List[Dict[str, Any]]:
-        """Fetch all households for a user"""
-        pass
-    
-    def get_household(self, household_id: str) -> Optional[Dict[str, Any]]:
-        """Fetch a specific household"""
-        pass
-    
-    def create_household(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Create a new household"""
-        pass
-    
-    def update_household(self, household_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Update household information"""
-        pass
-    
-    def delete_household(self, household_id: str) -> bool:
-        """Delete a household"""
-        pass
-    
-    def get_household_stats(self, household_id: str) -> Dict[str, Any]:
-        """Get statistics about a household (members, lists, items)"""
-        pass
+
+    def __init__(self, dao: Optional[HouseholdDAO] = None):
+        self._dao = dao or HouseholdDAO()
+
+    def create_household(self, token: str, name: str) -> Dict[str, Any]:
+        """Create a household with the caller as admin. Raises ValueError for an invalid name."""
+        name = (name or "").strip()
+        if not name or len(name) > MAX_NAME_LENGTH:
+            raise ValueError(f"Household name must be 1-{MAX_NAME_LENGTH} characters")
+        return self._dao.create_household(token, name).to_api()
+
+    def list_households(self, token: str) -> List[Dict[str, Any]]:
+        """Households the signed-in user is a member of"""
+        return [household.to_api() for household in self._dao.fetch_households(token)]
+
+    def get_household(self, token: str, household_id: int) -> Optional[Dict[str, Any]]:
+        """One household, or None if it does not exist or the user is not a member"""
+        household = self._dao.fetch_household(token, household_id)
+        return None if household is None else household.to_api()

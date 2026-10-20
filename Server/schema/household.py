@@ -10,7 +10,10 @@ class Household(TableModel):
 
     TABLE = "HOUSEHOLD"
     PREFIX = "HOUS_"
+    GENERATED = ("invite_code",)
 
     name: str
+    invite_code: Optional[str] = None
+    created_by: Optional[str] = None
     id: Optional[int] = None
     created_at: Optional[str] = None

@@ -3,11 +3,16 @@ Households Routes
 API endpoints for household management
 """
 
-from flask import abort
+from flask import abort, g, request
+from auth.decorators import require_auth
 from households import households_bp
+from households.HouseholdControllers import HouseholdController
+
+_household_controller = HouseholdController()
 
 
 @households_bp.route("", methods=["GET"])
+@require_auth
 def list_households():
     """
     Get all households for the current user
@@ -15,35 +20,48 @@ def list_households():
     Returns:
         List of household objects the user is a member of
     """
-    abort(501)
+    return _household_controller.list_households(g.token), 200
 
 
 @households_bp.route("", methods=["POST"])
+@require_auth
 def create_household():
     """
-    Create a new household
+    Create a new household; the caller becomes its admin member
     
     Request body:
         - name (str): Household name
     
     Returns:
-        Created household object
+        Created household object, including its invite code
     """
-    abort(501)
+    body = request.get_json(silent=True) or {}
+    name = body.get("name")
+    if not isinstance(name, str):
+        abort(400, description="name is required")
+    try:
+        household = _household_controller.create_household(g.token, name)
+    except ValueError as e:
+        abort(400, description=str(e))
+    return household, 201
 
 
-@households_bp.route("/<household_id>", methods=["GET"])
+@households_bp.route("/<int:household_id>", methods=["GET"])
+@require_auth
 def get_household(household_id):
     """
     Get specific household by OHID
     
     Parameters:
-        household_id (str): Household OHID
+        household_id (int): Household OHID
     
     Returns:
-        Household object with members list
+        Household object (404 if it does not exist or the user is not a member)
     """
-    abort(501)
+    household = _household_controller.get_household(g.token, household_id)
+    if household is None:
+        abort(404)
+    return household, 200
 
 
 @households_bp.route("/<household_id>", methods=["PUT"])

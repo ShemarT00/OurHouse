@@ -75,6 +75,8 @@ export const useHouseholds = () => {
     households: query.data ?? [],
     isLoading: query.isLoading,
     error: query.error,
+    refetch: query.refetch,
+    isRefetching: query.isRefetching,
     createHousehold: createMutation.mutate,
     createHouseholdAsync: createMutation.mutateAsync,
     updateHousehold: updateMutation.mutate,

@@ -1,9 +1,9 @@
-import { View, Text, FlatList, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, Pressable, ActivityIndicator, Share } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useHousehold } from '@/hooks/useHouseholds';
 import { useLists } from '@/hooks/useLists';
 import { useHouseholdMembers } from '@/hooks/useHouseholdMembers';
-import { ShoppingList } from '@/types';
+import type { ShoppingList } from '@/types';
 
 export default function HouseholdDetailScreen() {
   const router = useRouter();
@@ -11,6 +11,13 @@ export default function HouseholdDetailScreen() {
   const { household, isLoading: householdLoading } = useHousehold(id);
   const { lists, isLoading: listsLoading } = useLists(id);
   const { members } = useHouseholdMembers(id);
+
+  const shareInviteCode = () => {
+    if (!household) return;
+    Share.share({
+      message: `Join my household "${household.name}" on OurHouse with invite code ${household.inviteCode}`,
+    });
+  };
 
  /* Show loading indicator while household or lists are being fetched */
 
@@ -33,6 +40,18 @@ export default function HouseholdDetailScreen() {
         <Text className="text-2xl font-bold">{household?.name}</Text>
         <Text className="text-sm text-gray-400 mt-1">{members.length} member{members.length !== 1 ? 's' : ''}</Text>
       </View>
+
+      {household && (
+        <View className="mx-6 mb-6 bg-blue-50 rounded-xl p-4 flex-row items-center justify-between">
+          <View>
+            <Text className="text-sm text-gray-500 mb-1">Invite code</Text>
+            <Text className="text-2xl font-bold tracking-widest font-mono">{household.inviteCode}</Text>
+          </View>
+          <Pressable className="bg-blue-600 px-4 py-2 rounded-lg active:bg-blue-700" onPress={shareInviteCode}>
+            <Text className="text-white font-semibold">Share</Text>
+          </Pressable>
+        </View>
+      )}
 
       <View className="px-6 flex-row items-center justify-between mb-3">
         <Text className="text-lg font-semibold">Shopping Lists</Text>

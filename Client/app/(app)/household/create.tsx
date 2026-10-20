@@ -11,13 +11,18 @@ export default function CreateHouseholdScreen() {
   const router = useRouter();
   const { createHouseholdAsync, createMutation } = useHouseholds();
 
-  const { control, handleSubmit } = useForm<CreateHouseholdForm>({
+  const { control, handleSubmit, formState: { errors } } = useForm<CreateHouseholdForm>({
     defaultValues: { name: '' },
   });
 
   const onSubmit = async (data: CreateHouseholdForm) => {
-    await createHouseholdAsync(data);
-    router.back();
+    try {
+      const household = await createHouseholdAsync({ name: data.name.trim() });
+      // Open the new household so its invite code is ready to share
+      router.replace({ pathname: '/(app)/household/[id]', params: { id: household.OHID } });
+    } catch {
+      // createMutation.isError is now true; the error renders above the button
+    }
   };
 
   return (
@@ -34,16 +39,21 @@ export default function CreateHouseholdScreen() {
       <Controller
         control={control}
         name="name"
-        rules={{ required: true }}
+        rules={{
+          required: 'Household name is required',
+          validate: (value) => value.trim().length > 0 || 'Household name is required',
+          maxLength: { value: 255, message: 'Household name must be 255 characters or fewer' },
+        }}
         render={({ field: { onChange, value } }) => (
           <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3 mb-8"
+            className="border border-gray-300 rounded-lg px-4 py-3 mb-1"
             placeholder="e.g. The Smith Family"
             value={value}
             onChangeText={onChange}
           />
         )}
       />
+      <Text className="text-red-500 text-sm mb-7">{errors.name?.message ?? ''}</Text>
 
       {/* Display error message if household creation fails */}
 
