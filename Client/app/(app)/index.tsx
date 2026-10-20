@@ -1,11 +1,11 @@
 import { View, Text, FlatList, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useHouseholds } from '@/hooks/useHouseholds';
-import { Household } from '@/types';
+import type { Household } from '@/types';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { households, isLoading, error } = useHouseholds();
+  const { households, isLoading, error, refetch, isRefetching } = useHouseholds();
 
   if (isLoading) {
     return (
@@ -39,10 +39,12 @@ export default function HomeScreen() {
         data={households}
         keyExtractor={(item: Household) => String(item.OHID)}
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+        refreshing={isRefetching}
+        onRefresh={refetch}
         renderItem={({ item }) => (
           <Pressable
             className="border border-gray-200 rounded-xl p-4 mb-3"
-            onPress={() => router.push(`/(app)/household/${item.OHID}`)}
+            onPress={() => router.push({ pathname: '/(app)/household/[id]', params: { id: item.OHID } })}
           >
             <Text className="text-lg font-semibold">{item.name}</Text>
           </Pressable>

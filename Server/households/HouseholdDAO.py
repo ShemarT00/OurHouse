@@ -1,37 +1,45 @@
 """
 Households DAO (Data Access Object)
-Database operations for households
+Database operations for households. Every query runs as the signed-in user,
+so Row Level Security limits results to households they are a member of.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
+
+from schema import Household
+from supabase_client import get_user_client
 
 
 class HouseholdDAO:
     """Handle database operations for households"""
-    
-    def __init__(self):
-        pass
-    
-    def fetch_households(self, user_id: str) -> List[Dict[str, Any]]:
-        """Query all households a user belongs to"""
-        pass
-    
-    def fetch_household(self, household_id: str) -> Optional[Dict[str, Any]]:
-        """Query a specific household"""
-        pass
-    
-    def create_household(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Create a new household"""
-        pass
-    
-    def update_household(self, household_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Update household record"""
-        pass
-    
-    def delete_household(self, household_id: str) -> bool:
-        """Delete a household"""
-        pass
-    
-    def fetch_household_members_count(self, household_id: str) -> int:
-        """Count members in a household"""
-        pass
+
+    def create_household(self, token: str, name: str) -> Household:
+        """Create a household and the caller's admin membership (create_household RPC, migration 005)."""
+        response = get_user_client(token).rpc("create_household", {"p_name": name}).execute()
+        row = response.data[0] if isinstance(response.data, list) else response.data
+        return Household.from_row(row)
+
+    def fetch_households(self, token: str) -> List[Household]:
+        """Query all households the user belongs to (RLS filters out the rest)."""
+        response = (
+            get_user_client(token)
+            .table(Household.db_table())
+            .select("*")
+            .order(Household.column("created_at"))
+            .execute()
+        )
+        return [Household.from_row(row) for row in response.data]
+
+    def fetch_household(self, token: str, household_id: int) -> Optional[Household]:
+        """Query one household; None if it does not exist or the user is not a member."""
+        response = (
+            get_user_client(token)
+            .table(Household.db_table())
+            .select("*")
+            .eq(Household.column("id"), household_id)
+            .limit(1)
+            .execute()
+        )
+        if not response.data:
+            return None
+        return Household.from_row(response.data[0])

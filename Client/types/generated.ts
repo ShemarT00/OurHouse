@@ -20,6 +20,8 @@ export interface User {
 export interface Household {
   OHID: number;
   name: string;
+  inviteCode: string;
+  createdBy: string | null;
   createdAt: string;
 }
 

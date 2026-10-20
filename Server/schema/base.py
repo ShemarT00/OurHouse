@@ -19,8 +19,16 @@ from typing import Any, ClassVar, Dict, Tuple, Type, TypeVar
 
 T = TypeVar("T", bound="TableModel")
 
-# Columns the database fills in; omitted from inserts when unset
+# Columns the database fills in for every table; omitted from inserts when unset
 SERVER_GENERATED = ("id", "created_at")
+
+
+def api_field_name(field_name: str) -> str:
+    """JSON/TypeScript name for a field: id -> OHID, snake_case -> camelCase."""
+    if field_name == "id":
+        return "OHID"
+    head, *rest = field_name.split("_")
+    return head + "".join(part.capitalize() for part in rest)
 
 
 # Tables created with a quoted name in the migrations (reserved words)
@@ -30,6 +38,13 @@ QUOTED_TABLES = ("USER",)
 class TableModel:
     TABLE: ClassVar[str]
     PREFIX: ClassVar[str]
+    # Extra columns this table's database fills in (defaults, functions)
+    GENERATED: ClassVar[Tuple[str, ...]] = ()
+
+    @classmethod
+    def generated_fields(cls) -> Tuple[str, ...]:
+        """Fields the database always fills in, so every row read has them."""
+        return SERVER_GENERATED + cls.GENERATED
 
     @classmethod
     def db_table(cls) -> str:
@@ -61,9 +76,19 @@ class TableModel:
         row = {}
         for f in fields(self):
             value = getattr(self, f.name)
-            if value is None and f.name in SERVER_GENERATED:
+            if value is None and f.name in self.generated_fields():
                 continue
             if isinstance(value, Enum):
                 value = value.value
             row[self.column(f.name)] = value
         return row
+
+    def to_api(self) -> Dict[str, Any]:
+        """JSON body for the client, shaped like the generated TypeScript interface."""
+        body = {}
+        for f in fields(self):
+            value = getattr(self, f.name)
+            if isinstance(value, Enum):
+                value = value.value
+            body[api_field_name(f.name)] = value
+        return body

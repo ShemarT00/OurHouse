@@ -28,7 +28,12 @@ def get_admin_client() -> Client:
 
 
 def get_user_client(token: str) -> Client:
-    """Return a client that sends the user's access token, so RLS policies apply."""
-    client = create_client(*_credentials())
+    """Return a client that sends the user's access token, so RLS policies apply.
+
+    Uses the public anon key: the user's token decides what the request may do,
+    so the service key (which can bypass RLS) is never sent on the user's behalf.
+    """
+    url, service_key = _credentials()
+    client = create_client(url, os.getenv("SUPABASE_ANON_KEY") or service_key)
     client.postgrest.auth(token)
     return client
