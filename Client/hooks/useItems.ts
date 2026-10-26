@@ -122,6 +122,8 @@ export const useItems = (householdId: string, listId: string) => {
     items: query.data ?? [],
     isLoading: query.isLoading,
     error: query.error,
+    refetch: query.refetch,
+    isRefetching: query.isRefetching,
     addItem: createMutation.mutate,
     addItemAsync: createMutation.mutateAsync,
     updateItem: updateMutation.mutate,

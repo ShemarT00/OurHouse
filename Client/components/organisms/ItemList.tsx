@@ -1,33 +1,42 @@
 import { FlatList, View, Text } from 'react-native';
 import { ItemCard } from '../molecules/ItemCard';
-import type { Item } from '../../types';
+import type { Item } from '@/types';
 
+// Items on a shopping list; tapping opens the item, the checkbox ticks it off
 interface ItemListProps {
   items: Item[];
-  onItemPress?: (item: Item) => void; // Optional callback when an item is pressed, used to navigate to item details or edit screen
+  onItemPress?: (item: Item) => void;
+  onToggleBought?: (item: Item) => void;
+  refreshing?: boolean;
+  onRefresh?: () => void;
+  /** Shown instead of the empty state, e.g. when items failed to load */
+  errorMessage?: string;
 }
 
-
-// Component to display a list of items in a shopping list, used in the shopping list details screen. Each item is rendered using the ItemCard component, and tapping an item triggers the onItemPress callback with the item data.
-
-
-export function ItemList({ items, onItemPress }: ItemListProps) {
-  if (items.length === 0) {
-    return (
-      <View className="flex-1 items-center justify-center py-12">
-        <Text className="text-gray-400 text-base">No items yet</Text>
-      </View>
-    );
-  }
-
+export function ItemList({ items, onItemPress, onToggleBought, refreshing, onRefresh, errorMessage }: ItemListProps) {
   return (
     <FlatList
       data={items}
       keyExtractor={(item) => String(item.OHID)}
       renderItem={({ item }) => (
-        <ItemCard item={item} onPress={() => onItemPress?.(item)} />
+        <ItemCard
+          item={item}
+          onPress={() => onItemPress?.(item)}
+          onToggleBought={() => onToggleBought?.(item)}
+        />
       )}
-      contentContainerClassName="gap-2 p-4"
+      contentContainerClassName="gap-2 px-6 pb-6"
+      refreshing={refreshing}
+      onRefresh={onRefresh}
+      ListEmptyComponent={
+        <View className="items-center py-12">
+          {errorMessage ? (
+            <Text className="text-red-500 text-base">{errorMessage}</Text>
+          ) : (
+            <Text className="text-gray-400 text-base">No items yet. Add one!</Text>
+          )}
+        </View>
+      }
     />
   );
 }

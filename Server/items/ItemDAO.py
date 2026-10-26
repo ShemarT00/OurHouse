@@ -1,133 +1,71 @@
 """
 Items DAO (Data Access Object)
-Database operations for shopping list items
+Database operations for shopping list items. Queries run as the signed-in
+user, so Row Level Security limits them to items on lists in households they
+belong to.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
+
+from schema import Item
+from supabase_client import get_user_client
 
 
 class ItemDAO:
-    """Handle database operations for shopping list items"""
-    
-    def __init__(self):
-        pass
+    """Handle database operations for items"""
 
+    def _table(self, token: str):
+        return get_user_client(token).table(Item.db_table())
 
-# Fetch Queries   
-    def fetch_all_items(self, list_id: str) -> List[Dict[str, Any]]:
-        """Query all items on a specific shopping list"""
-        query = "SELECT * FROM ITEM WHERE ITEM_LIST_ID = %s"
-        params = (list_id,)
-        # Execute the query and return the list of items
-    
-    def fetch_item(self, item_id: str) -> Optional[Dict[str, Any]]:
-        
-        query = "SELECT * FROM ITEM WHERE ITEM_ID = %s"
-        params = (item_id,)
-
-        result = self.db.execute(query, params)
-        
-        if result:
-            return result[0]
-        return None
-
-
-# Other Queries
-    def item_bought(self, item_id: str) -> bool:
-        """Mark an item as purchased"""
-        query = "UPDATE ITEM SET ITEM_BOUGHT = TRUE WHERE ITEM_ID = %s"
-        result = self.db.execute(query, (item_id,))
-        return result is not None
-
-# Priority Queries
-    def fetch_priority_of_item(self, item_id: str) -> int:
-
-        query = "SELECT ITEM_PRIORITY FROM ITEM WHERE ITEM_ID = %s"
-
-        result = self.db.execute(query, (item_id,))
-        
-        # Execute the query and return the priority value
-        # return integer of priority level (0, 1, 2, 3) or None if item not found
-        if result:
-            return result[0][0]  # Return the priority value from the first row
-        return None  # Return None if no item found
-    
-    def change_item_priority(self, item_id: str, new_priority: int) -> Optional[Dict[str, Any]]:
-        
-        query = "UPDATE ITEM SET ITEM_PRIORITY = %s WHERE ITEM_ID = %s RETURNING ITEM_ID, ITEM_NAME, ITEM_PRIORITY, ITEM_LIST_ID, ITEM_STORE_ID, ITEM_QUANTITY"
-        params = (new_priority, item_id)
-
-        result = self.db.execute(query, params)
-        
-        if result:
-            return result[0]  # Return the updated item details
-        return None  # Return None if no item found or update failed
-    
-    def fetch_desc_order_priority_items(self, list_id: str) -> List[Dict[str, Any]]:
-
-        query = "SELECT ITEM_NAME, ITEM_PRIORITY, ITEM_QUANTITY FROM ITEM WHERE ITEM_LIST_ID = %s ORDER BY ITEM_PRIORITY DESC"
-        params = (list_id,)
-        # Execute the query and return the list of items in descending priority order
-
-        result = self.db.execute(query, params)
-        return result.fetchall()  # Return all items as a list of dictionaries
-    
-    def fetch_asc_order_priority_items(self, list_id: str) -> List[Dict[str, Any]]:
-
-        query = "SELECT ITEM_NAME, ITEM_PRIORITY, ITEM_QUANTITY FROM ITEM WHERE ITEM_LIST_ID = %s ORDER BY ITEM_PRIORITY ASC"
-        params = (list_id,)
-        # Execute the query and return the list of items in ascending priority order
-
-        result = self.db.execute(query, params)
-        return result.fetchall()  # Return all items as a list of dictionaries
-
-
-
-# CRUD Operations
-
-    def create_item(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        
-        """Create a new item on a list"""
-
-        query = """INSERT INTO ITEM (ITEM_NAME, ITEM_PRIORITY, ITEM_LIST_ID, ITEM_STORE_ID, ITEM_QUANTITY) 
-                   VALUES (%s, %s, %s, %s, %s) RETURNING ITEM_ID, ITEM_NAME, ITEM_PRIORITY, ITEM_LIST_ID, ITEM_STORE_ID, ITEM_QUANTITY"""
-        params = (
-            data["item_name"],
-            data["item_priority"],
-            data["item_list_id"],
-            data["item_store_id"],
-            data["item_quantity"]
+    def fetch_items(self, token: str, list_id: int) -> List[Item]:
+        """A list's items: still-needed first, then most urgent, then oldest."""
+        response = (
+            self._table(token)
+            .select("*")
+            .eq(Item.column("list_id"), list_id)
+            .order(Item.column("bought"))
+            .order(Item.column("priority"), desc=True)
+            .order(Item.column("created_at"))
+            .execute()
         )
-        result = self.db.execute(query, params)
-        if result:
-            return result[0]
-        return None
-    
-    def update_item(self, item_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Update an item"""
+        return [Item.from_row(row) for row in response.data]
 
-        query = """UPDATE ITEM SET ITEM_NAME = %s, ITEM_PRIORITY = %s, ITEM_LIST_ID = %s, ITEM_STORE_ID = %s, ITEM_QUANTITY = %s
-                   WHERE ITEM_ID = %s RETURNING ITEM_ID, ITEM_NAME, ITEM_PRIORITY, ITEM
-                     _LIST_ID, ITEM_STORE_ID, ITEM_QUANTITY"""
-        params = (
-            data["item_name"],  
-            data["item_priority"],
-            data["item_list_id"],
-            data["item_store_id"],
-            data["item_quantity"],
-            item_id
+    def fetch_item(self, token: str, list_id: int, item_id: int) -> Optional[Item]:
+        """One item on a list; None if it does not exist or the user cannot see it."""
+        response = (
+            self._table(token)
+            .select("*")
+            .eq(Item.column("list_id"), list_id)
+            .eq(Item.column("id"), item_id)
+            .limit(1)
+            .execute()
         )
-        result = self.db.execute(query, params)
-        if result:
-            return result[0]
-        return None
-    
-    def delete_item(self, item_id: str) -> bool:
-        """Delete an item"""
-        query = "DELETE FROM ITEM WHERE ITEM_ID = %s"
-        result = self.db.execute(query, (item_id,))
-        return result is not None
-    
-    def fetch_unpurchased_items(self, list_id: str) -> List[Dict[str, Any]]:
-        """Query items not yet marked as purchased"""
-        pass
+        return Item.from_row(response.data[0]) if response.data else None
+
+    def create_item(self, token: str, item: Item) -> Item:
+        """Insert an item; RLS only allows it on a list in the user's household."""
+        response = self._table(token).insert(item.to_row()).execute()
+        return Item.from_row(response.data[0])
+
+    def update_item(self, token: str, list_id: int, item_id: int, changes: Dict[str, Any]) -> Optional[Item]:
+        """Apply field changes (keyed by model field name); None if no such item is visible."""
+        values = {Item.column(field): value for field, value in changes.items()}
+        response = (
+            self._table(token)
+            .update(values)
+            .eq(Item.column("list_id"), list_id)
+            .eq(Item.column("id"), item_id)
+            .execute()
+        )
+        return Item.from_row(response.data[0]) if response.data else None
+
+    def delete_item(self, token: str, list_id: int, item_id: int) -> bool:
+        """Delete an item; False if no such item is visible to the user."""
+        response = (
+            self._table(token)
+            .delete()
+            .eq(Item.column("list_id"), list_id)
+            .eq(Item.column("id"), item_id)
+            .execute()
+        )
+        return bool(response.data)
