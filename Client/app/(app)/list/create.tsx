@@ -12,19 +12,18 @@ export default function CreateListScreen() {
   const { householdId } = useLocalSearchParams<{ householdId: string }>();
   const { createListAsync, createMutation } = useLists(householdId);
 
-  const { control, handleSubmit } = useForm<CreateListForm>({
+  const { control, handleSubmit, formState: { errors } } = useForm<CreateListForm>({
     defaultValues: { name: '' },
   });
 
-  // form submission,
-  // calls the createListAsync function from the useLists hook and navigates back to the previous screen on success
-
+  // Create the list, then return to the household, whose list of lists refreshes
   const onSubmit = async (data: CreateListForm) => {
-    
-    await createListAsync(data); 
-    
-    router.back(); 
-    // Navigate back to the previous screen after successful creation
+    try {
+      await createListAsync({ name: data.name.trim() });
+      router.back();
+    } catch {
+      // createMutation.isError is now true; the error renders above the button
+    }
   };
 
   return (
@@ -39,16 +38,21 @@ export default function CreateListScreen() {
       <Controller
         control={control}
         name="name"
-        rules={{ required: true }}
+        rules={{
+          required: 'List name is required',
+          validate: (value) => value.trim().length > 0 || 'List name is required',
+          maxLength: { value: 255, message: 'List name must be 255 characters or fewer' },
+        }}
         render={({ field: { onChange, value } }) => (
           <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3 mb-8"
+            className="border border-gray-300 rounded-lg px-4 py-3 mb-1"
             placeholder="e.g. Weekly Groceries"
             value={value}
             onChangeText={onChange}
           />
         )}
       />
+      <Text className="text-red-500 text-sm mb-7">{errors.name?.message ?? ''}</Text>
 
       {createMutation.isError && ( // Display error message if list creation fails
         <Text className="text-red-500 mb-4">{createMutation.error?.message}</Text>

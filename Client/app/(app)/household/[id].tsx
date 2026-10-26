@@ -9,7 +9,7 @@ export default function HouseholdDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { household, isLoading: householdLoading } = useHousehold(id);
-  const { lists, isLoading: listsLoading } = useLists(id);
+  const { lists, isLoading: listsLoading, error: listsError, refetch: refetchLists, isRefetching } = useLists(id);
   const { members } = useHouseholdMembers(id);
 
   const shareInviteCode = () => {
@@ -73,9 +73,11 @@ export default function HouseholdDetailScreen() {
         data={lists}
         keyExtractor={(item: ShoppingList) => String(item.OHID)}
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+        refreshing={isRefetching}
+        onRefresh={refetchLists}
         renderItem={({ item }) => (
           <Pressable
-            className="border border-gray-200 rounded-xl p-4 mb-3"
+            className="border border-gray-200 rounded-xl p-4 mb-3 active:bg-gray-50"
             onPress={() =>
               router.push({ pathname: '/(app)/list/[id]', params: { id: item.OHID, householdId: id } })
             }
@@ -85,7 +87,11 @@ export default function HouseholdDetailScreen() {
         )}
         ListEmptyComponent={
           <View className="items-center mt-12">
-            <Text className="text-gray-400">No lists yet. Create one!</Text>
+            {listsError ? (
+              <Text className="text-red-500">{listsError.message}</Text>
+            ) : (
+              <Text className="text-gray-400">No lists yet. Create one!</Text>
+            )}
           </View>
         }
       />

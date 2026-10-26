@@ -1,73 +1,51 @@
 """
 Lists DAO (Data Access Object)
-Database operations for shopping lists
+Database operations for shopping lists. Queries run as the signed-in user, so
+Row Level Security limits them to lists in households they belong to.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
+
+from schema import ShoppingList
+from supabase_client import get_user_client
 
 
 class ListDAO:
     """Handle database operations for shopping lists"""
-    
-    def __init__(self):
-        pass
-    
-    def fetch_lists(self, household_id: str) -> List[Dict[str, Any]]:
-        """Query all lists for a household"""
-        pass
-    
-    def fetch_list(self, list_id: str) -> Optional[Dict[str, Any]]:
-        """Query a specific list"""
-        pass
-        
-    def fetch_item_count(self, list_id: str) -> int:
-        """Query the number of items on a specific list"""
-        
-        query = "SELECT COUNT(*) FROM ITEM WHERE ITEM_LIST_ID = %s"
-        params = (list_id,)
 
-        result = self.db.execute(query, params)
-        
-        return result[0][0] if result else 0  # Return the count from the first row, or 0 if no items found
-    
-    def create_list(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Create a new list"""
+    def fetch_lists(self, token: str, household_id: int) -> List[ShoppingList]:
+        """A household's lists, oldest first."""
+        response = (
+            get_user_client(token)
+            .table(ShoppingList.db_table())
+            .select("*")
+            .eq(ShoppingList.column("household_id"), household_id)
+            .order(ShoppingList.column("created_at"))
+            .execute()
+        )
+        return [ShoppingList.from_row(row) for row in response.data]
 
-        query = "INSERT INTO SHOPPING_LIST (LIST_NAME, HOUSEHOLD_ID) VALUES (%s, %s) RETURNING LIST_ID, LIST_NAME, HOUSEHOLD_ID"
-        params = (data['list_name'], data['household_id'])
+    def fetch_list(self, token: str, household_id: int, list_id: int) -> Optional[ShoppingList]:
+        """One list in a household; None if it does not exist or the user cannot see it."""
+        response = (
+            get_user_client(token)
+            .table(ShoppingList.db_table())
+            .select("*")
+            .eq(ShoppingList.column("household_id"), household_id)
+            .eq(ShoppingList.column("id"), list_id)
+            .limit(1)
+            .execute()
+        )
+        if not response.data:
+            return None
+        return ShoppingList.from_row(response.data[0])
 
-
-        result = self.db.execute(query, params)
-        if result:
-            return {
-                "list_id": result[0][0],
-                "list_name": result[0][1],
-                "household_id": result[0][2]
-            }
-        return {}
-    
-    def update_list(self, list_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        
-        query = "UPDATE SHOPPING_LIST SET LIST_NAME = %s WHERE LIST_ID = %s RETURNING LIST_ID, LIST_NAME, HOUSEHOLD_ID"
-        params = (data['list_name'], list_id)
-        result = self.db.execute(query, params)
-        if result:
-            return {
-                "list_id": result[0][0],
-                "list_name": result[0][1],
-                "household_id": result[0][2]
-            }   
-
-        pass
-    
-    def delete_list(self, list_id: str) -> bool:
-        """Delete a list"""
-
-        query = "DELETE FROM SHOPPING_LIST WHERE LIST_ID = %s"
-        params = (list_id,)
-        result = self.db.execute(query, params)
-        return result is not None
-            
-
-        pass
-    
+    def create_list(self, token: str, shopping_list: ShoppingList) -> ShoppingList:
+        """Insert a list; RLS only allows it in a household the user belongs to."""
+        response = (
+            get_user_client(token)
+            .table(ShoppingList.db_table())
+            .insert(shopping_list.to_row())
+            .execute()
+        )
+        return ShoppingList.from_row(response.data[0])

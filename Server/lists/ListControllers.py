@@ -2,74 +2,48 @@
 Lists Controllers
 Business logic for shopping list operations
 """
-from lists.ListDAO import ListDAO
-from items.ItemDAO import ItemDAO
-from typing import List, Optional, Dict, Any
+
+from typing import Any, Dict, List, Optional
+
+from households.HouseholdDAO import HouseholdDAO
+from schema import ShoppingList
+
+from .ListDAO import ListDAO
+
+MAX_NAME_LENGTH = 255
 
 
 class ListController:
     """Handle shopping list business logic and operations"""
 
-    listDB = ListDAO()  # Data Access Object for list-related database operations
-    listTypeName = ""
-    isListEmpty = True
-    listItemCount = 0
-    listItemNames = []
+    def __init__(self, dao: Optional[ListDAO] = None, household_dao: Optional[HouseholdDAO] = None):
+        self._dao = dao or ListDAO()
+        self._household_dao = household_dao or HouseholdDAO()
 
-# TODO create variable names based off of the TABLE COLUMNS 
+    def _can_see_household(self, token: str, household_id: int) -> bool:
+        # RLS hides households the user is not a member of
+        return self._household_dao.fetch_household(token, household_id) is not None
 
+    def list_lists(self, token: str, household_id: int) -> Optional[List[Dict[str, Any]]]:
+        """A household's lists, or None if the household does not exist or the user is not a member."""
+        if not self._can_see_household(token, household_id):
+            return None
+        return [shopping_list.to_api() for shopping_list in self._dao.fetch_lists(token, household_id)]
 
-    
-    def __init__(self):
-        pass
-    
-    def get_lists(self, household_id: str) -> List[Dict[str, Any]]:
-        """Fetch all shopping lists for a household"""
-        pass
-    
-    def get_list(self, list_id: str) -> Optional[Dict[str, Any]]:
-        """Fetch a specific shopping list"""
-        pass
-    
-    def get_item_count(self, list_id: str) -> int:
+    def get_list(self, token: str, household_id: int, list_id: int) -> Optional[Dict[str, Any]]:
+        """One list, or None if it does not exist or the user is not a member of its household."""
+        shopping_list = self._dao.fetch_list(token, household_id, list_id)
+        return None if shopping_list is None else shopping_list.to_api()
 
-        """Fetch the number of items on a specific shopping list"""
+    def create_list(self, token: str, household_id: int, name: str) -> Optional[Dict[str, Any]]:
+        """Create a named list in a household; None if the user is not a member.
 
-        self.listItemCount = self.listDB.fetch_item_count(list_id)
-        return self.listItemCount
-    
-    # TODO retrieve items in the list ordered by priority using functions in ListDAO and return the list of item names in the order of priority (urgent, medium, low, unprioritized)
-
-    # TODO retrieve items in the list ordered by priority using functions in ListDAO and return the list of item names in the order of priority (unprioritized, low, medium, urgent)
-
-    
-
-    def new_list (self, data: Dict[str, Any]) -> str:
-
-        """Call create_list method then return a message confirming the creation of the list with the new list's name"""
-
-        list_info = self.create_list_db(data)
-        if list_info:
-            return f"Successfully created list '{list_info['list_name']}'"
-        return "Failed to create list"
-    
-
-
-    def create_list_db(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Create a new shopping list"""
-        return self.listDB.create_list(data)
-    
-    def change_list_name(self, list_id: str, data: Dict[str, Any]) -> str:
-        """Call update_list method then return a message confirming the update of the list with the updated list's name"""
-
-        updated_list_info = self.listDB.update_list(list_id, data)
-        if updated_list_info:
-            return f"Successfully updated list name to '{updated_list_info['list_name']}'"
-        return "Failed to update list name"
-    
-    def delete_list(self, list_id: str) -> bool:
-        """Delete a shopping list"""
-
-        return self.listDB.delete_list(list_id)
-        
-    
+        Raises ValueError for an invalid name.
+        """
+        name = (name or "").strip()
+        if not name or len(name) > MAX_NAME_LENGTH:
+            raise ValueError(f"List name must be 1-{MAX_NAME_LENGTH} characters")
+        if not self._can_see_household(token, household_id):
+            return None
+        created = self._dao.create_list(token, ShoppingList(name=name, household_id=household_id))
+        return created.to_api()

@@ -79,6 +79,8 @@ export const useLists = (householdId: string) => {
     lists: query.data ?? [],
     isLoading: query.isLoading,
     error: query.error,
+    refetch: query.refetch,
+    isRefetching: query.isRefetching,
     createList: createMutation.mutate,
     createListAsync: createMutation.mutateAsync,
     updateList: updateMutation.mutate,
