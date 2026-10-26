@@ -3,24 +3,30 @@ Members Routes
 API endpoints for household member management
 """
 
-from flask import abort
+from flask import abort, g
 from members import members_bp
+from members.MemberController import MemberController
 from auth.decorators import require_auth
 
+_member_controller = MemberController()
 
-@members_bp.route("/households/<household_id>/members", methods=["GET"])
+
+@members_bp.route("/households/<int:household_id>/members", methods=["GET"])
 @require_auth
 def list_household_members(household_id):
     """
     Get all members of a household
     
     Parameters:
-        household_id (str): Household OHID
+        household_id (int): Household OHID
     
     Returns:
-        List of member objects in the household
+        List of member objects (404 if the household does not exist or the user is not a member)
     """
-    abort(501)
+    members = _member_controller.list_members(g.token, household_id)
+    if members is None:
+        abort(404)
+    return members, 200
 
 
 @members_bp.route("/households/<household_id>/members/<member_id>", methods=["GET"])

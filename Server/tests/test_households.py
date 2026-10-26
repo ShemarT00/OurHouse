@@ -93,3 +93,37 @@ def test_get_household_not_found_or_not_a_member_is_404(client, signed_in, dao):
 def test_household_to_row_leaves_invite_code_to_the_database():
     row = Household(name="The Smiths").to_row()
     assert row == {"hous_name": "The Smiths", "hous_created_by": None}
+
+
+def test_join_household_with_valid_code(client, signed_in, monkeypatch):
+    join = MagicMock(return_value=household(9, "Flat 4B"))
+    monkeypatch.setattr("households.HouseholdDAO.HouseholdDAO.join_household", join)
+
+    response = client.post("/api/households/join", json={"code": " abcd2345 "}, headers=AUTH)
+
+    assert response.status_code == 200
+    assert response.get_json()["OHID"] == 9
+    # Normalised before it reaches the database
+    join.assert_called_once_with("good-token", "ABCD2345")
+
+
+def test_join_household_with_unknown_code_is_404(client, signed_in, monkeypatch):
+    monkeypatch.setattr("households.HouseholdDAO.HouseholdDAO.join_household", MagicMock(return_value=None))
+
+    response = client.post("/api/households/join", json={"code": "ZZZZZZZZ"}, headers=AUTH)
+
+    assert response.status_code == 404
+    assert response.get_json()["error"] == "Not Found"
+
+
+@pytest.mark.parametrize("body", [{}, {"code": ""}, {"code": "   "}, {"code": 123}, {"code": "X" * 33}])
+def test_join_household_rejects_blank_codes(client, signed_in, monkeypatch, body):
+    join = MagicMock()
+    monkeypatch.setattr("households.HouseholdDAO.HouseholdDAO.join_household", join)
+
+    assert client.post("/api/households/join", json=body, headers=AUTH).status_code == 400
+    join.assert_not_called()
+
+
+def test_join_requires_a_token(client):
+    assert client.post("/api/households/join", json={"code": "ABCD2345"}).status_code == 401

@@ -19,6 +19,16 @@ class HouseholdDAO:
         row = response.data[0] if isinstance(response.data, list) else response.data
         return Household.from_row(row)
 
+    def join_household(self, token: str, invite_code: str) -> Optional[Household]:
+        """Join the household with this invite code (join_household RPC, migration 006).
+
+        Returns None for an unknown code. Joining a household twice is a no-op.
+        """
+        response = get_user_client(token).rpc("join_household", {"p_code": invite_code}).execute()
+        rows = response.data if isinstance(response.data, list) else [response.data]
+        rows = [row for row in rows if row]
+        return Household.from_row(rows[0]) if rows else None
+
     def fetch_households(self, token: str) -> List[Household]:
         """Query all households the user belongs to (RLS filters out the rest)."""
         response = (

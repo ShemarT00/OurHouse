@@ -15,6 +15,10 @@ export interface UpdateHouseholdData {
   name?: string;
 }
 
+export interface JoinHouseholdData {
+  code: string;
+}
+
 /**
  * Get all households for current user
  */
@@ -40,6 +44,24 @@ export const createHousehold = async (
   data: CreateHouseholdData
 ): Promise<ApiResponse<Household>> => {
   return apiPost<Household>(API_ENDPOINTS.HOUSEHOLDS.CREATE, data);
+};
+
+/**
+ * Join a household with its invite code (joining twice is harmless)
+ */
+export const joinHousehold = async (
+  data: JoinHouseholdData
+): Promise<ApiResponse<Household>> => {
+  const response = await apiPost<Household>(API_ENDPOINTS.HOUSEHOLDS.JOIN, {
+    code: data.code.trim().toUpperCase(),
+  });
+  if (response.error?.status === 404) {
+    return {
+      ...response,
+      error: { ...response.error, message: "No household has that invite code. Check it and try again." },
+    };
+  }
+  return response;
 };
 
 /**

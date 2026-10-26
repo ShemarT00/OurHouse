@@ -38,7 +38,13 @@ export default function HouseholdDetailScreen() {
           <Text className="text-blue-600">← Back</Text>
         </Pressable>
         <Text className="text-2xl font-bold">{household?.name}</Text>
-        <Text className="text-sm text-gray-400 mt-1">{members.length} member{members.length !== 1 ? 's' : ''}</Text>
+        <Pressable
+          onPress={() => router.push({ pathname: '/(app)/household/members/[id]', params: { id } })}
+        >
+          <Text className="text-sm text-blue-600 mt-1">
+            {members.length} member{members.length !== 1 ? 's' : ''} ›
+          </Text>
+        </Pressable>
       </View>
 
       {household && (

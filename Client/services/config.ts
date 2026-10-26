@@ -55,6 +55,7 @@ export const API_ENDPOINTS = {
   HOUSEHOLDS: {
     LIST: "/households",
     CREATE: "/households",
+    JOIN: "/households/join",
     GET: (OHID: string) => `/households/${OHID}`,
     UPDATE: (OHID: string) => `/households/${OHID}`,
     DELETE: (OHID: string) => `/households/${OHID}`,

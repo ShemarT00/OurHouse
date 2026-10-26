@@ -16,6 +16,8 @@ IMPLEMENTED = {
     ("GET", "/api/households"),
     ("POST", "/api/households"),
     ("GET", "/api/households/<int:household_id>"),
+    ("POST", "/api/households/join"),
+    ("GET", "/api/households/<int:household_id>/members"),
 }
 
 # Endpoints that check authentication before reaching their stub body
