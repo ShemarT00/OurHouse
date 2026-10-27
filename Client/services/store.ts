@@ -1,70 +1,39 @@
 /**
  * Store API Service
- * Handles store/location management for shopping items
+ * A household's stores: where its items are bought
  */
 
-import { apiGet, apiPost, apiPut, apiDelete, ApiResponse } from "./api";
+import { apiGet, apiPost, ApiResponse } from "./api";
 import { API_ENDPOINTS } from "./config";
-
-export interface Store {
-  OHID: string;
-  name: string;
-  address?: string;
-  phone?: string;
-}
+import type { Store } from "@/types";
 
 export interface CreateStoreData {
   name: string;
-  address?: string;
-  phone?: string;
-}
-
-export interface UpdateStoreData {
-  name?: string;
-  address?: string;
-  phone?: string;
 }
 
 /**
- * Get all stores (global or user's custom stores)
+ * Get a household's stores, by name
  */
-export const getStores = async (): Promise<ApiResponse<Store[]>> => {
-  return apiGet<Store[]>(API_ENDPOINTS.STORES.LIST);
+export const getHouseholdStores = async (
+  householdId: string
+): Promise<ApiResponse<Store[]>> => {
+  return apiGet<Store[]>(API_ENDPOINTS.STORES.LIST(householdId));
 };
 
 /**
- * Get specific store
- */
-export const getStore = async (OHID: string): Promise<
-  ApiResponse<Store>
-> => {
-  return apiGet<Store>(API_ENDPOINTS.STORES.GET(OHID));
-};
-
-/**
- * Create custom store
+ * Add a store to a household
  */
 export const createStore = async (
+  householdId: string,
   data: CreateStoreData
 ): Promise<ApiResponse<Store>> => {
-  return apiPost<Store>(API_ENDPOINTS.STORES.CREATE, data);
-};
-
-/**
- * Update store
- */
-export const updateStore = async (
-  OHID: string,
-  data: UpdateStoreData
-): Promise<ApiResponse<Store>> => {
-  return apiPut<Store>(API_ENDPOINTS.STORES.UPDATE(OHID), data);
-};
-
-/**
- * Delete store
- */
-export const deleteStore = async (OHID: string): Promise<
-  ApiResponse<void>
-> => {
-  return apiDelete<void>(API_ENDPOINTS.STORES.DELETE(OHID));
+  const response = await apiPost<Store>(API_ENDPOINTS.STORES.CREATE(householdId), data);
+  // Names are checked before sending, so a 400 means the household already has this store
+  if (response.error?.status === 400) {
+    return {
+      ...response,
+      error: { ...response.error, message: "This household already has a store with that name." },
+    };
+  }
+  return response;
 };

@@ -63,6 +63,7 @@ def create_item(household_id, list_id):
         - priority (int, optional): 0 none, 1 low, 2 medium, 3 high (default 0)
         - quantity (int, optional): 1-9999
         - notes (str, optional)
+        - storeId (int, optional): one of the household's stores
 
     Returns:
         Created item object
@@ -85,7 +86,7 @@ def update_item(household_id, list_id, item_id):
 
     Request body (all optional):
         - name (str), priority (int 0-3), quantity (int or null),
-          notes (str or null), bought (bool)
+          notes (str or null), bought (bool), storeId (int or null)
 
     Returns:
         Updated item object

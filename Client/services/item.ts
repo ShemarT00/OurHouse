@@ -12,14 +12,16 @@ export interface CreateItemData {
   priority?: Priority;
   quantity?: number | null;
   notes?: string | null;
+  storeId?: number | null;
 }
 
-/** Send only the fields to change; null clears quantity or notes */
+/** Send only the fields to change; null clears quantity, notes or store */
 export interface UpdateItemData {
   name?: string;
   priority?: Priority;
   quantity?: number | null;
   notes?: string | null;
+  storeId?: number | null;
   bought?: boolean;
 }
 

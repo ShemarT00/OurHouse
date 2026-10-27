@@ -38,6 +38,14 @@ describe('ItemCard', () => {
     expect(getByText('semi-skimmed')).toBeTruthy();
   });
 
+  it("shows the item's store when it has one", () => {
+    const { getByText, queryByText, rerender } = render(<ItemCard item={item({ storeId: 7 })} storeName="Tesco" />);
+    expect(getByText('at Tesco')).toBeTruthy();
+
+    rerender(<ItemCard item={item()} />);
+    expect(queryByText(/^at /)).toBeNull();
+  });
+
   it('ticks the item off from its checkbox, separately from opening it', () => {
     const onPress = jest.fn();
     const onToggleBought = jest.fn();

@@ -2,14 +2,16 @@ import { ScrollView, Text, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { useItems } from '@/hooks/useItems';
+import { useStores } from '@/hooks/useStores';
 import { ItemFormFields, EMPTY_ITEM_FORM, itemFormToData } from '@/components/organisms';
 import type { ItemFormValues } from '@/components/organisms';
 
-// Add an item to a shopping list: name, urgency, quantity and notes
+// Add an item to a shopping list: name, urgency, store, quantity and notes
 export default function CreateItemScreen() {
   const router = useRouter();
   const { householdId, listId } = useLocalSearchParams<{ householdId: string; listId: string }>();
   const { addItemAsync, createMutation } = useItems(householdId, listId);
+  const { stores } = useStores(householdId);
 
   const { control, handleSubmit, formState: { errors } } = useForm<ItemFormValues>({
     defaultValues: EMPTY_ITEM_FORM,
@@ -32,7 +34,7 @@ export default function CreateItemScreen() {
 
       <Text className="text-2xl font-bold mb-8">Add Item</Text>
 
-      <ItemFormFields control={control} errors={errors} />
+      <ItemFormFields control={control} errors={errors} stores={stores} />
 
       {createMutation.isError && (
         <Text className="text-red-500 mb-4">{createMutation.error?.message}</Text>

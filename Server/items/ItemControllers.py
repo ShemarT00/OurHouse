@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 
 from lists.ListDAO import ListDAO
 from schema import Item, Priority
+from stores.StoreDAO import StoreDAO
 
 from .ItemDAO import ItemDAO
 
@@ -15,7 +16,10 @@ MAX_NOTES_LENGTH = 1000
 MAX_QUANTITY = 9999
 
 # Fields a client may set, by their JSON (camelCase) name
-EDITABLE_FIELDS = {"name": "name", "priority": "priority", "quantity": "quantity", "notes": "notes", "bought": "bought"}
+EDITABLE_FIELDS = {
+    "name": "name", "priority": "priority", "quantity": "quantity", "notes": "notes",
+    "bought": "bought", "storeId": "store_id",
+}
 
 
 def _name(value: Any) -> str:
@@ -58,19 +62,37 @@ def _bought(value: Any) -> bool:
     return value
 
 
-VALIDATORS = {"name": _name, "priority": _priority, "quantity": _quantity, "notes": _notes, "bought": _bought}
+def _store_id(value: Any) -> Optional[int]:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError("storeId must be a store's OHID or null")
+    return value
+
+
+VALIDATORS = {
+    "name": _name, "priority": _priority, "quantity": _quantity, "notes": _notes,
+    "bought": _bought, "store_id": _store_id,
+}
 
 
 class ItemController:
     """Handle shopping list item business logic and operations"""
 
-    def __init__(self, dao: Optional[ItemDAO] = None, list_dao: Optional[ListDAO] = None):
+    def __init__(self, dao: Optional[ItemDAO] = None, list_dao: Optional[ListDAO] = None,
+                 store_dao: Optional[StoreDAO] = None):
         self._dao = dao or ItemDAO()
         self._list_dao = list_dao or ListDAO()
+        self._store_dao = store_dao or StoreDAO()
 
     def _list_visible(self, token: str, household_id: int, list_id: int) -> bool:
         # The list must belong to this household, and RLS hides it from non-members
         return self._list_dao.fetch_list(token, household_id, list_id) is not None
+
+    def _check_store(self, token: str, household_id: int, store_id: Optional[int]) -> None:
+        # An item's store must be one of its household's stores
+        if store_id is not None and self._store_dao.fetch_store(token, household_id, store_id) is None:
+            raise ValueError("Store not found in this household")
 
     def list_items(self, token: str, household_id: int, list_id: int) -> Optional[List[Dict[str, Any]]]:
         """A list's items, or None if the list is not in this household or the user is not a member."""
@@ -92,14 +114,16 @@ class ItemController:
             priority=_priority(body.get("priority", Priority.NONE.value)),
             quantity=_quantity(body.get("quantity")),
             notes=_notes(body.get("notes")),
+            store_id=_store_id(body.get("storeId")),
         )
         if not self._list_visible(token, household_id, list_id):
             return None
+        self._check_store(token, household_id, item.store_id)
         return self._dao.create_item(token, item).to_api()
 
     def update_item(self, token: str, household_id: int, list_id: int, item_id: int,
                     body: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Change any of name, priority, quantity, notes, bought. Raises ValueError for invalid fields."""
+        """Change any of name, priority, quantity, notes, bought, storeId. Raises ValueError for invalid fields."""
         changes = {
             field: VALIDATORS[field](body[json_name])
             for json_name, field in EDITABLE_FIELDS.items()
@@ -110,6 +134,7 @@ class ItemController:
         changes = {k: v.value if isinstance(v, Priority) else v for k, v in changes.items()}
         if not self._list_visible(token, household_id, list_id):
             return None
+        self._check_store(token, household_id, changes.get("store_id"))
         item = self._dao.update_item(token, list_id, item_id, changes)
         return None if item is None else item.to_api()
 

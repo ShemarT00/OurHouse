@@ -61,6 +61,7 @@ export interface Item {
 export interface Store {
   OHID: number;
   name: string;
+  householdId: number;
   createdAt: string;
 }
 

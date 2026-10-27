@@ -185,3 +185,56 @@ def test_delete_item(client, signed_in, list_visible, dao):
 def test_delete_missing_item_is_404(client, signed_in, list_visible, dao):
     dao.delete.return_value = False
     assert client.delete(ITEMS_URL + "/4", headers=AUTH).status_code == 404
+
+
+# --- Stores on items (#9) ---
+
+@pytest.fixture()
+def store_lookup(monkeypatch):
+    """StoreDAO.fetch_store: store 7 is in household 5; any other id is not."""
+    from schema import Store
+
+    fetch = MagicMock(side_effect=lambda token, household_id, store_id:
+                      Store(id=7, name="Tesco", household_id=5) if (household_id, store_id) == (5, 7) else None)
+    monkeypatch.setattr("stores.StoreDAO.StoreDAO.fetch_store", fetch)
+    return fetch
+
+
+def test_add_item_with_a_household_store(client, signed_in, list_visible, store_lookup, dao):
+    dao.create.side_effect = lambda token, new_item: replace(new_item, id=9)
+
+    response = client.post(ITEMS_URL, json={"name": "Milk", "storeId": 7}, headers=AUTH)
+
+    assert response.status_code == 201
+    assert response.get_json()["storeId"] == 7
+    store_lookup.assert_called_once_with("good-token", 5, 7)
+
+
+def test_add_item_rejects_a_store_from_another_household(client, signed_in, list_visible, store_lookup, dao):
+    response = client.post(ITEMS_URL, json={"name": "Milk", "storeId": 8}, headers=AUTH)
+
+    assert response.status_code == 400
+    assert "Store not found" in response.get_json()["message"]
+    dao.create.assert_not_called()
+
+
+@pytest.mark.parametrize("store_id", [0, -1, "7", True, 1.5])
+def test_add_item_rejects_invalid_store_ids(client, signed_in, list_visible, store_lookup, dao, store_id):
+    assert client.post(ITEMS_URL, json={"name": "Milk", "storeId": store_id}, headers=AUTH).status_code == 400
+    dao.create.assert_not_called()
+
+
+def test_edit_item_sets_and_clears_its_store(client, signed_in, list_visible, store_lookup, dao):
+    dao.update.return_value = item(4)
+
+    assert client.put(ITEMS_URL + "/4", json={"storeId": 7}, headers=AUTH).status_code == 200
+    assert dao.update.call_args.args == ("good-token", 3, 4, {"store_id": 7})
+
+    assert client.put(ITEMS_URL + "/4", json={"storeId": None}, headers=AUTH).status_code == 200
+    assert dao.update.call_args.args == ("good-token", 3, 4, {"store_id": None})
+    store_lookup.assert_called_once()  # clearing needs no lookup
+
+
+def test_edit_item_rejects_a_store_from_another_household(client, signed_in, list_visible, store_lookup, dao):
+    assert client.put(ITEMS_URL + "/4", json={"storeId": 8}, headers=AUTH).status_code == 400
+    dao.update.assert_not_called()

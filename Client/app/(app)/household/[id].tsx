@@ -3,6 +3,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useHousehold } from '@/hooks/useHouseholds';
 import { useLists } from '@/hooks/useLists';
 import { useHouseholdMembers } from '@/hooks/useHouseholdMembers';
+import { useStores } from '@/hooks/useStores';
 import type { ShoppingList } from '@/types';
 
 export default function HouseholdDetailScreen() {
@@ -11,6 +12,7 @@ export default function HouseholdDetailScreen() {
   const { household, isLoading: householdLoading } = useHousehold(id);
   const { lists, isLoading: listsLoading, error: listsError, refetch: refetchLists, isRefetching } = useLists(id);
   const { members } = useHouseholdMembers(id);
+  const { stores } = useStores(id);
 
   const shareInviteCode = () => {
     if (!household) return;
@@ -38,13 +40,22 @@ export default function HouseholdDetailScreen() {
           <Text className="text-blue-600">← Back</Text>
         </Pressable>
         <Text className="text-2xl font-bold">{household?.name}</Text>
-        <Pressable
-          onPress={() => router.push({ pathname: '/(app)/household/members/[id]', params: { id } })}
-        >
-          <Text className="text-sm text-blue-600 mt-1">
-            {members.length} member{members.length !== 1 ? 's' : ''} ›
-          </Text>
-        </Pressable>
+        <View className="flex-row gap-4">
+          <Pressable
+            onPress={() => router.push({ pathname: '/(app)/household/members/[id]', params: { id } })}
+          >
+            <Text className="text-sm text-blue-600 mt-1">
+              {members.length} member{members.length !== 1 ? 's' : ''} ›
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => router.push({ pathname: '/(app)/household/stores/[id]', params: { id } })}
+          >
+            <Text className="text-sm text-blue-600 mt-1">
+              {stores.length} store{stores.length !== 1 ? 's' : ''} ›
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       {household && (
