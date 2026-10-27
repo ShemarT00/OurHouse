@@ -1,18 +1,12 @@
-import { View, Text, TextInput, Pressable, ActivityIndicator } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
 import { useEffect } from 'react';
+import { View, ScrollView, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useForm } from 'react-hook-form';
 import { useItems } from '@/hooks/useItems';
-import { Priority } from '@/types';
-import { PrioritySelector } from '@/components/atoms';
+import { ItemFormFields, EMPTY_ITEM_FORM, itemFormToData } from '@/components/organisms';
+import type { ItemFormValues } from '@/components/organisms';
 
-interface EditItemForm {
-  name: string;
-  priority: Priority;
-  quantity: string;
-  notes: string;
-}
-
+// Edit or delete an item on a shopping list
 export default function ItemDetailScreen() {
   const router = useRouter();
   const { id, householdId, listId } = useLocalSearchParams<{
@@ -20,22 +14,21 @@ export default function ItemDetailScreen() {
     householdId: string;
     listId: string;
   }>();
-  const { items, isLoading, updateItemAsync, removeItem, updateMutation, isRemoving } =
+  const { items, isLoading, updateItemAsync, removeItemAsync, updateMutation, deleteMutation, isRemoving } =
     useItems(householdId, listId);
 
   const item = items.find((i) => String(i.OHID) === id);
 
-  const { control, handleSubmit, reset } = useForm<EditItemForm>({
-    defaultValues: { name: '', priority: Priority.NONE, quantity: '', notes: '' },
+  const { control, handleSubmit, reset, formState: { errors } } = useForm<ItemFormValues>({
+    defaultValues: EMPTY_ITEM_FORM,
   });
-
 
   useEffect(() => {
     if (item) {
       reset({
         name: item.name,
         priority: item.priority,
-        quantity: item.quantity ? String(item.quantity) : '',
+        quantity: item.quantity !== null ? String(item.quantity) : '',
         notes: item.notes ?? '',
       });
     }
@@ -51,96 +44,58 @@ export default function ItemDetailScreen() {
 
   if (!item) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <Text className="text-gray-400">Item not found.</Text>
+      <View className="flex-1 items-center justify-center bg-white px-6">
+        <Text className="text-gray-400 mb-4">Item not found.</Text>
+        <Pressable onPress={() => router.back()}>
+          <Text className="text-blue-600">← Back</Text>
+        </Pressable>
       </View>
     );
   }
 
-  const onSubmit = async (data: EditItemForm) => {
-    await updateItemAsync({
-      itemOHID: id,
-      data: {
-        name: data.name,
-        priority: data.priority,
-        quantity: data.quantity ? Number(data.quantity) : undefined,
-        notes: data.notes || undefined,
-      },
-    });
-    router.back();
+  const onSubmit = async (values: ItemFormValues) => {
+    try {
+      await updateItemAsync({ itemOHID: id, data: itemFormToData(values) });
+      router.back();
+    } catch {
+      // updateMutation.isError is now true; the error renders above the buttons
+    }
   };
 
   const onDelete = () => {
-    removeItem(id, { onSuccess: () => router.back() });
+    Alert.alert('Delete item?', `Remove "${item.name}" from this list?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await removeItemAsync(id);
+            router.back();
+          } catch {
+            // deleteMutation.isError is now true; the error renders above the buttons
+          }
+        },
+      },
+    ]);
   };
 
+  const errorMessage = updateMutation.error?.message ?? deleteMutation.error?.message;
+
   return (
-    <View className="flex-1 bg-white px-6 pt-14">
+    <ScrollView className="flex-1 bg-white" contentContainerClassName="px-6 pt-14 pb-8" keyboardShouldPersistTaps="handled">
       <Pressable className="mb-6" onPress={() => router.back()}>
         <Text className="text-blue-600">← Back</Text>
       </Pressable>
 
       <Text className="text-2xl font-bold mb-8">Edit Item</Text>
 
-      <Text className="text-sm text-gray-500 mb-2">Item Name</Text>
-      <Controller
-        control={control}
-        name="name"
-        rules={{ required: true }}
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3 mb-4"
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
+      <ItemFormFields control={control} errors={errors} />
 
-      <Text className="text-sm text-gray-500 mb-2">Priority</Text>
-      <View className="mb-4">
-        <Controller
-          control={control}
-          name="priority"
-          render={({ field: { onChange, value } }) => (
-            <PrioritySelector value={value} onChange={onChange} />
-          )}
-        />
-      </View>
-
-      <Text className="text-sm text-gray-500 mb-2">Quantity (optional)</Text>
-      <Controller
-        control={control}
-        name="quantity"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3 mb-4"
-            keyboardType="numeric"
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-
-      <Text className="text-sm text-gray-500 mb-2">Notes (optional)</Text>
-      <Controller
-        control={control}
-        name="notes"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3 mb-8"
-            value={value}
-            onChangeText={onChange}
-            multiline
-          />
-        )}
-      />
-
-      {updateMutation.isError && (
-        <Text className="text-red-500 mb-4">{updateMutation.error?.message}</Text>
-      )}
+      {errorMessage && <Text className="text-red-500 mb-4">{errorMessage}</Text>}
 
       <Pressable
-        className="bg-blue-600 rounded-lg py-3 items-center mb-3"
+        className="bg-blue-600 rounded-lg py-3 items-center mb-3 active:bg-blue-700"
         onPress={handleSubmit(onSubmit)}
         disabled={updateMutation.isPending}
       >
@@ -152,7 +107,7 @@ export default function ItemDetailScreen() {
       </Pressable>
 
       <Pressable
-        className="border border-red-400 rounded-lg py-3 items-center"
+        className="border border-red-400 rounded-lg py-3 items-center active:bg-red-50"
         onPress={onDelete}
         disabled={isRemoving}
       >
@@ -162,6 +117,6 @@ export default function ItemDetailScreen() {
           <Text className="text-red-500 font-semibold text-base">Delete Item</Text>
         )}
       </Pressable>
-    </View>
+    </ScrollView>
   );
 }

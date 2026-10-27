@@ -21,6 +21,12 @@ IMPLEMENTED = {
     ("GET", "/api/households/<int:household_id>/shopping-lists"),
     ("POST", "/api/households/<int:household_id>/shopping-lists"),
     ("GET", "/api/households/<int:household_id>/shopping-lists/<int:list_id>"),
+    ("GET", "/api/households/<int:household_id>/shopping-lists/<int:list_id>/items"),
+    ("POST", "/api/households/<int:household_id>/shopping-lists/<int:list_id>/items"),
+    ("GET", "/api/households/<int:household_id>/shopping-lists/<int:list_id>/items/<int:item_id>"),
+    ("PUT", "/api/households/<int:household_id>/shopping-lists/<int:list_id>/items/<int:item_id>"),
+    ("PUT", "/api/households/<int:household_id>/shopping-lists/<int:list_id>/items/<int:item_id>/toggle"),
+    ("DELETE", "/api/households/<int:household_id>/shopping-lists/<int:list_id>/items/<int:item_id>"),
 }
 
 # Endpoints that check authentication before reaching their stub body

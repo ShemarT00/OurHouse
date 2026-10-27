@@ -10,17 +10,16 @@ import type { Item, Priority } from "@/types";
 export interface CreateItemData {
   name: string;
   priority?: Priority;
-  quantity?: number;
-  notes?: string;
-  storeId?: number | null;
+  quantity?: number | null;
+  notes?: string | null;
 }
 
+/** Send only the fields to change; null clears quantity or notes */
 export interface UpdateItemData {
   name?: string;
   priority?: Priority;
-  quantity?: number;
-  notes?: string;
-  storeId?: number | null;
+  quantity?: number | null;
+  notes?: string | null;
   bought?: boolean;
 }
 

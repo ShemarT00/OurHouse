@@ -1,112 +1,45 @@
-import { View, Text, TextInput, Pressable, ActivityIndicator } from 'react-native';
+import { ScrollView, Text, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useItems } from '@/hooks/useItems';
-import { Priority } from '@/types';
-import { PrioritySelector } from '@/components/atoms';
+import { ItemFormFields, EMPTY_ITEM_FORM, itemFormToData } from '@/components/organisms';
+import type { ItemFormValues } from '@/components/organisms';
 
-/* Form data structure for creating a new item, includes name, priority, quantity, and notes */
+// Add an item to a shopping list: name, urgency, quantity and notes
+export default function CreateItemScreen() {
+  const router = useRouter();
+  const { householdId, listId } = useLocalSearchParams<{ householdId: string; listId: string }>();
+  const { addItemAsync, createMutation } = useItems(householdId, listId);
 
-interface CreateItemForm {
-  name: string;
-  priority: Priority;
-  quantity: string;
-  notes: string;
-}
-
-/* Screen component for creating a new item in a shopping list, includes form handling and submission logic */
-
-export default function CreateItemScreen() { 
-  const router = useRouter(); // Router for navigation
-  const { householdId, listId } = useLocalSearchParams<{ householdId: string; listId: string }>(); // Get householdId and listId from route parameters
-  const { addItemAsync, createMutation } = useItems(householdId, listId); // Hook for managing items, provides function to add item and mutation state
-
-  // Form handling using react-hook-form, sets up default values and tracks form state
-  const { control, handleSubmit } = useForm<CreateItemForm>({
-    defaultValues: { name: '', priority: Priority.NONE, quantity: '', notes: '' },
+  const { control, handleSubmit, formState: { errors } } = useForm<ItemFormValues>({
+    defaultValues: EMPTY_ITEM_FORM,
   });
 
-
-  const onSubmit = async (data: CreateItemForm) => {
-    await addItemAsync({
-      name: data.name,
-      priority: data.priority,
-      quantity: data.quantity ? Number(data.quantity) : undefined,
-      notes: data.notes || undefined,
-    });
-    router.back();
+  const onSubmit = async (values: ItemFormValues) => {
+    try {
+      await addItemAsync(itemFormToData(values));
+      router.back();
+    } catch {
+      // createMutation.isError is now true; the error renders above the button
+    }
   };
 
   return (
-    <View className="flex-1 bg-white px-6 pt-14">
+    <ScrollView className="flex-1 bg-white" contentContainerClassName="px-6 pt-14 pb-8" keyboardShouldPersistTaps="handled">
       <Pressable className="mb-6" onPress={() => router.back()}>
         <Text className="text-blue-600">← Back</Text>
       </Pressable>
 
       <Text className="text-2xl font-bold mb-8">Add Item</Text>
 
-      <Text className="text-sm text-gray-500 mb-2">Item Name</Text>
-      <Controller
-        control={control}
-        name="name"
-        rules={{ required: true }}
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3 mb-4"
-            placeholder="e.g. Milk"
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-
-      <Text className="text-sm text-gray-500 mb-2">Priority</Text>
-      <View className="mb-4">
-        <Controller
-          control={control}
-          name="priority"
-          render={({ field: { onChange, value } }) => (
-            <PrioritySelector value={value} onChange={onChange} />
-          )}
-        />
-      </View>
-
-      <Text className="text-sm text-gray-500 mb-2">Quantity (optional)</Text>
-      <Controller
-        control={control}
-        name="quantity"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3 mb-4"
-            placeholder="e.g. 2"
-            keyboardType="numeric"
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-
-      <Text className="text-sm text-gray-500 mb-2">Notes (optional)</Text>
-      <Controller
-        control={control}
-        name="notes"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3 mb-8"
-            placeholder="Any extra details..."
-            value={value}
-            onChangeText={onChange}
-            multiline
-          />
-        )}
-      />
+      <ItemFormFields control={control} errors={errors} />
 
       {createMutation.isError && (
         <Text className="text-red-500 mb-4">{createMutation.error?.message}</Text>
       )}
 
       <Pressable
-        className="bg-blue-600 rounded-lg py-3 items-center"
+        className="bg-blue-600 rounded-lg py-3 items-center active:bg-blue-700"
         onPress={handleSubmit(onSubmit)}
         disabled={createMutation.isPending}
       >
@@ -116,6 +49,6 @@ export default function CreateItemScreen() {
           <Text className="text-white font-semibold text-base">Add Item</Text>
         )}
       </Pressable>
-    </View>
+    </ScrollView>
   );
 }
