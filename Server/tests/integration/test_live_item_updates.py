@@ -42,7 +42,9 @@ class Listener:
         await self._client.connect()
         await self._client.set_auth(self._token)
         channel = self._client.channel(self._topic, {"config": {"private": True}})
-        channel.on_broadcast("*", lambda message: self.events.append(message["event"]))
+        # The Python client has no "*" wildcard (the app's JS client does), so name each event
+        for event in ("INSERT", "UPDATE", "DELETE"):
+            channel.on_broadcast(event, lambda message: self.events.append(message["event"]))
         await channel.subscribe(self._on_state)
         await asyncio.wait_for(self._answered.wait(), JOIN_TIMEOUT)
 
@@ -101,6 +103,6 @@ def test_member_sees_changes_and_non_member_receives_none(supabase_env, make_use
     owner_events, outsider_state, outsider_events = asyncio.run(scenario())
 
     assert owner_events == ["INSERT", "UPDATE", "DELETE"]
-    # The outsider is refused the channel, or (at worst) joins and hears nothing
+    # The outsider is refused the channel ("Unauthorized") and hears nothing
+    assert outsider_state == RealtimeSubscribeStates.CHANNEL_ERROR
     assert outsider_events == []
-    assert outsider_state in (RealtimeSubscribeStates.CHANNEL_ERROR, RealtimeSubscribeStates.SUBSCRIBED)
