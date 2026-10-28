@@ -3,6 +3,7 @@ import { View, ScrollView, Text, Pressable, ActivityIndicator, Alert } from 'rea
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { useItems } from '@/hooks/useItems';
+import { useStores } from '@/hooks/useStores';
 import { ItemFormFields, EMPTY_ITEM_FORM, itemFormToData } from '@/components/organisms';
 import type { ItemFormValues } from '@/components/organisms';
 
@@ -16,6 +17,7 @@ export default function ItemDetailScreen() {
   }>();
   const { items, isLoading, updateItemAsync, removeItemAsync, updateMutation, deleteMutation, isRemoving } =
     useItems(householdId, listId);
+  const { stores } = useStores(householdId);
 
   const item = items.find((i) => String(i.OHID) === id);
 
@@ -28,6 +30,7 @@ export default function ItemDetailScreen() {
       reset({
         name: item.name,
         priority: item.priority,
+        storeId: item.storeId,
         quantity: item.quantity !== null ? String(item.quantity) : '',
         notes: item.notes ?? '',
       });
@@ -90,7 +93,7 @@ export default function ItemDetailScreen() {
 
       <Text className="text-2xl font-bold mb-8">Edit Item</Text>
 
-      <ItemFormFields control={control} errors={errors} />
+      <ItemFormFields control={control} errors={errors} stores={stores} />
 
       {errorMessage && <Text className="text-red-500 mb-4">{errorMessage}</Text>}
 

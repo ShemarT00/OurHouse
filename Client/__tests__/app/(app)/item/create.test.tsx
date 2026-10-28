@@ -16,6 +16,10 @@ jest.mock('@/hooks/useItems', () => ({
   useItems: jest.fn(),
 }));
 
+jest.mock('@/hooks/useStores', () => ({
+  useStores: () => ({ stores: [{ OHID: 7, name: 'Tesco', householdId: 5, createdAt: '' }] }),
+}));
+
 const mockUseItems = useItems as jest.Mock;
 const defaultMutation = { isPending: false, isError: false, error: null };
 
@@ -44,6 +48,7 @@ describe('CreateItemScreen', () => {
       expect(mockAddItemAsync).toHaveBeenCalledWith({
         name: 'Milk',
         priority: Priority.HIGH,
+        storeId: null,
         quantity: 2,
         notes: 'semi-skimmed',
       });
@@ -59,7 +64,20 @@ describe('CreateItemScreen', () => {
     fireEvent.press(utils.getAllByText('Add Item')[1]);
 
     await waitFor(() =>
-      expect(mockAddItemAsync).toHaveBeenCalledWith({ name: 'Bread', priority: Priority.NONE, quantity: null, notes: null })
+      expect(mockAddItemAsync).toHaveBeenCalledWith({ name: 'Bread', priority: Priority.NONE, storeId: null, quantity: null, notes: null })
+    );
+  });
+
+  it('saves the store picked for the item', async () => {
+    mockAddItemAsync.mockResolvedValueOnce({ OHID: 9 });
+    const utils = render(<CreateItemScreen />);
+
+    fill(utils, { name: 'Milk' });
+    fireEvent.press(utils.getByText('Tesco'));
+    fireEvent.press(utils.getAllByText('Add Item')[1]);
+
+    await waitFor(() =>
+      expect(mockAddItemAsync).toHaveBeenCalledWith(expect.objectContaining({ name: 'Milk', storeId: 7 }))
     );
   });
 

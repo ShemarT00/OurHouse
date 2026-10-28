@@ -49,6 +49,7 @@ def create_app(config=None):
     from members import members_bp
     from lists import lists_bp
     from items import items_bp
+    from stores import stores_bp
     from notifications import notifications_bp
 
     app.register_blueprint(users_bp)
@@ -56,6 +57,7 @@ def create_app(config=None):
     app.register_blueprint(members_bp)
     app.register_blueprint(lists_bp)
     app.register_blueprint(items_bp)
+    app.register_blueprint(stores_bp)
     app.register_blueprint(notifications_bp)
 
     # Centralized error handlers

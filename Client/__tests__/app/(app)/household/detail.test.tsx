@@ -15,6 +15,7 @@ jest.mock('expo-router', () => ({
 jest.mock('@/hooks/useHouseholds', () => ({ useHousehold: jest.fn() }));
 jest.mock('@/hooks/useLists', () => ({ useLists: jest.fn() }));
 jest.mock('@/hooks/useHouseholdMembers', () => ({ useHouseholdMembers: jest.fn() }));
+jest.mock('@/hooks/useStores', () => ({ useStores: () => ({ stores: [{ OHID: 7, name: 'Tesco' }] }) }));
 
 const withLists = (lists: Array<{ OHID: number; name: string }>, error: Error | null = null) =>
   (useLists as jest.Mock).mockReturnValue({
@@ -72,5 +73,14 @@ describe('HouseholdDetailScreen — shopping lists', () => {
 
     withLists([], new Error('HTTP 500'));
     expect(render(<HouseholdDetailScreen />).getByText('HTTP 500')).toBeTruthy();
+  });
+
+  it("opens the household's stores", () => {
+    withLists([]);
+
+    const { getByText } = render(<HouseholdDetailScreen />);
+    fireEvent.press(getByText('1 store ›'));
+
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(app)/household/stores/[id]', params: { id: '5' } });
   });
 });

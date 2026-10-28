@@ -2,19 +2,28 @@ import { View, Text, TextInput } from 'react-native';
 import { Controller } from 'react-hook-form';
 import type { Control, FieldErrors } from 'react-hook-form';
 import { PrioritySelector } from '../atoms/PrioritySelector';
+import { StorePicker } from '../atoms/StorePicker';
 import { Priority } from '@/types';
+import type { Store } from '@/types';
 
-// Name, priority, quantity and notes fields shared by the add-item and edit-item screens.
+// Name, priority, store, quantity and notes fields shared by the add-item and edit-item screens.
 // Limits match the server's validation in Server/items/ItemControllers.py.
 
 export interface ItemFormValues {
   name: string;
   priority: Priority;
+  storeId: number | null;
   quantity: string;
   notes: string;
 }
 
-export const EMPTY_ITEM_FORM: ItemFormValues = { name: '', priority: Priority.NONE, quantity: '', notes: '' };
+export const EMPTY_ITEM_FORM: ItemFormValues = {
+  name: '',
+  priority: Priority.NONE,
+  storeId: null,
+  quantity: '',
+  notes: '',
+};
 
 const MAX_QUANTITY = 9999;
 
@@ -22,6 +31,7 @@ const MAX_QUANTITY = 9999;
 export const itemFormToData = (values: ItemFormValues) => ({
   name: values.name.trim(),
   priority: values.priority,
+  storeId: values.storeId,
   quantity: values.quantity.trim() ? Number(values.quantity) : null,
   notes: values.notes.trim() || null,
 });
@@ -29,9 +39,11 @@ export const itemFormToData = (values: ItemFormValues) => ({
 interface ItemFormFieldsProps {
   control: Control<ItemFormValues>;
   errors: FieldErrors<ItemFormValues>;
+  /** The household's stores, offered in the store picker */
+  stores: Store[];
 }
 
-export function ItemFormFields({ control, errors }: ItemFormFieldsProps) {
+export function ItemFormFields({ control, errors, stores }: ItemFormFieldsProps) {
   return (
     <View>
       <Text className="text-sm text-gray-500 mb-2">Item Name</Text>
@@ -61,6 +73,20 @@ export function ItemFormFields({ control, errors }: ItemFormFieldsProps) {
           name="priority"
           render={({ field: { onChange, value } }) => <PrioritySelector value={value} onChange={onChange} />}
         />
+      </View>
+
+      <Text className="text-sm text-gray-500 mb-2">Store (optional)</Text>
+      <View className="mb-4">
+        <Controller
+          control={control}
+          name="storeId"
+          render={({ field: { onChange, value } }) => (
+            <StorePicker stores={stores} value={value} onChange={onChange} />
+          )}
+        />
+        {stores.length === 0 && (
+          <Text className="text-xs text-gray-400 mt-2">Add stores from the household screen to pick one here.</Text>
+        )}
       </View>
 
       <Text className="text-sm text-gray-500 mb-2">Quantity (optional)</Text>

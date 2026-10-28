@@ -94,12 +94,7 @@ export {
 
 // Store Service
 export {
-  getStores,
-  getStore,
+  getHouseholdStores,
   createStore,
-  updateStore,
-  deleteStore,
-  type Store,
   type CreateStoreData,
-  type UpdateStoreData,
 } from "./store";

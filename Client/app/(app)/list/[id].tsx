@@ -2,6 +2,7 @@ import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useList } from '@/hooks/useLists';
 import { useItems } from '@/hooks/useItems';
+import { useStores } from '@/hooks/useStores';
 import { ItemList } from '@/components/organisms';
 
 export default function ListDetailScreen() {
@@ -9,6 +10,7 @@ export default function ListDetailScreen() {
   const { id, householdId } = useLocalSearchParams<{ id: string; householdId: string }>();
   const { list, isLoading: listLoading } = useList(householdId, id);
   const { items, isLoading: itemsLoading, error, toggleItem, refetch, isRefetching } = useItems(householdId, id);
+  const { stores } = useStores(householdId);
 
   if (listLoading || itemsLoading) {
     return (
@@ -44,6 +46,7 @@ export default function ListDetailScreen() {
 
       <ItemList
         items={items}
+        stores={stores}
         onItemPress={(item) =>
           router.push({ pathname: '/(app)/item/[id]', params: { id: item.OHID, householdId, listId: id } })
         }

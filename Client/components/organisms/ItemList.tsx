@@ -1,10 +1,12 @@
 import { FlatList, View, Text } from 'react-native';
 import { ItemCard } from '../molecules/ItemCard';
-import type { Item } from '@/types';
+import type { Item, Store } from '@/types';
 
 // Items on a shopping list; tapping opens the item, the checkbox ticks it off
 interface ItemListProps {
   items: Item[];
+  /** The household's stores, to show each item's store by name */
+  stores?: Store[];
   onItemPress?: (item: Item) => void;
   onToggleBought?: (item: Item) => void;
   refreshing?: boolean;
@@ -13,7 +15,9 @@ interface ItemListProps {
   errorMessage?: string;
 }
 
-export function ItemList({ items, onItemPress, onToggleBought, refreshing, onRefresh, errorMessage }: ItemListProps) {
+export function ItemList({ items, stores = [], onItemPress, onToggleBought, refreshing, onRefresh, errorMessage }: ItemListProps) {
+  const storeNames = new Map(stores.map((s) => [s.OHID, s.name]));
+
   return (
     <FlatList
       data={items}
@@ -21,6 +25,7 @@ export function ItemList({ items, onItemPress, onToggleBought, refreshing, onRef
       renderItem={({ item }) => (
         <ItemCard
           item={item}
+          storeName={item.storeId !== null ? storeNames.get(item.storeId) : undefined}
           onPress={() => onItemPress?.(item)}
           onToggleBought={() => onToggleBought?.(item)}
         />

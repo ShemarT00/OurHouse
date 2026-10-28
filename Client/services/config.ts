@@ -112,10 +112,7 @@ export const API_ENDPOINTS = {
 
   // Stores
   STORES: {
-    LIST: "/stores",
-    GET: (OHID: string) => `/stores/${OHID}`,
-    CREATE: "/stores",
-    UPDATE: (OHID: string) => `/stores/${OHID}`,
-    DELETE: (OHID: string) => `/stores/${OHID}`,
+    LIST: (householdId: string) => `/households/${householdId}/stores`,
+    CREATE: (householdId: string) => `/households/${householdId}/stores`,
   },
 } as const;
