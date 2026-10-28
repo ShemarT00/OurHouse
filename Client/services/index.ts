@@ -98,3 +98,6 @@ export {
   createStore,
   type CreateStoreData,
 } from "./store";
+
+// Realtime Service
+export { subscribeToListItems } from "./realtime";

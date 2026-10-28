@@ -6,6 +6,7 @@
  * Each mutation handles API calls and updates the local cache to keep the UI in sync with the server state.
  */
 
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getListItems,
@@ -17,6 +18,7 @@ import {
   UpdateItemData,
 } from '@/services/item';
 import { throwIfError } from '@/services/api';
+import { subscribeToListItems } from '@/services/realtime';
 import { Item } from '@/types';
 
 export const itemsKey = (householdId: string, listId: string) =>
@@ -141,4 +143,19 @@ export const useItems = (householdId: string, listId: string) => {
     toggleMutation,
     deleteMutation,
   };
+};
+
+/**
+ * Keep an open list's items current: refetch whenever any member changes one.
+ * Unsubscribes when the screen closes or the list changes.
+ */
+export const useLiveItems = (householdId: string, listId: string) => {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!householdId || !listId) return undefined;
+    return subscribeToListItems(listId, () => {
+      queryClient.invalidateQueries({ queryKey: itemsKey(householdId, listId) });
+    });
+  }, [householdId, listId, queryClient]);
 };

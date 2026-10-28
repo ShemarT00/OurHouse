@@ -1,7 +1,7 @@
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useList } from '@/hooks/useLists';
-import { useItems } from '@/hooks/useItems';
+import { useItems, useLiveItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
 import { ItemList } from '@/components/organisms';
 
@@ -11,6 +11,7 @@ export default function ListDetailScreen() {
   const { list, isLoading: listLoading } = useList(householdId, id);
   const { items, isLoading: itemsLoading, error, toggleItem, refetch, isRefetching } = useItems(householdId, id);
   const { stores } = useStores(householdId);
+  useLiveItems(householdId, id);
 
   if (listLoading || itemsLoading) {
     return (
