@@ -54,3 +54,7 @@ _Avoid_: Deleted
 **Notification**:
 What one member sees in their inbox about an item event in their household. The actor does not receive one.
 _Avoid_: Alert, message, activity
+
+**Inbox**:
+A member's own list of notifications from the households they belong to, each either read or unread.
+_Avoid_: Feed, activity log, notification centre
