@@ -3,25 +3,25 @@ Notifications Routes
 API endpoints for notification management
 """
 
-from flask import abort
+from flask import abort, g
+from auth.decorators import require_auth
 from notifications import notifications_bp
+from notifications.NotifControllers import NotificationController
+
+_notification_controller = NotificationController()
 
 
 @notifications_bp.route("", methods=["GET"])
+@require_auth
 def list_notifications():
     """
-    Get all notifications for current user
-    
-    Query parameters:
-        - limit (int, optional): Max notifications to return (default: 50)
-        - offset (int, optional): Offset for pagination (default: 0)
-        - unread (bool, optional): Filter only unread notifications
-        - count (bool, optional): Return count instead of list
-    
+    Get the signed-in member's inbox: their notifications from the last
+    30 days, newest first
+
     Returns:
-        List of notification objects or count
+        List of notification objects
     """
-    abort(501)
+    return _notification_controller.list_notifications(g.token), 200
 
 
 @notifications_bp.route("/<notification_id>", methods=["GET"])

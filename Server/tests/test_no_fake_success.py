@@ -29,6 +29,7 @@ IMPLEMENTED = {
     ("DELETE", "/api/households/<int:household_id>/shopping-lists/<int:list_id>/items/<int:item_id>"),
     ("GET", "/api/households/<int:household_id>/stores"),
     ("POST", "/api/households/<int:household_id>/stores"),
+    ("GET", "/api/notifications"),
 }
 
 # Endpoints that check authentication before reaching their stub body

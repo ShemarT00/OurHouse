@@ -3,41 +3,17 @@ Notifications Controllers
 Business logic for notification operations
 """
 
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
+
+from .NotifDAO import NotificationDAO
 
 
 class NotificationController:
     """Handle notification business logic and operations"""
-    
-    def __init__(self):
-        pass
-    
-    def get_notifications(
-        self,
-        user_id: str,
-        limit: int = 50,
-        offset: int = 0,
-        unread_only: bool = False
-    ) -> List[Dict[str, Any]]:
-        """Fetch notifications for a user"""
-        pass
-    
-    def get_notification(self, user_id: str, notification_id: str) -> Optional[Dict[str, Any]]:
-        """Fetch a specific notification"""
-        pass
-    
-    def mark_read(self, user_id: str, notification_id: str) -> Dict[str, Any]:
-        """Mark a notification as read"""
-        pass
-    
-    def mark_all_read(self, user_id: str) -> int:
-        """Mark all notifications as read for a user"""
-        pass
-    
-    def delete_notification(self, user_id: str, notification_id: str) -> bool:
-        """Delete a notification"""
-        pass
-    
-    def clear_read_notifications(self, user_id: str) -> int:
-        """Delete all read notifications for a user"""
-        pass
+
+    def __init__(self, dao: Optional[NotificationDAO] = None):
+        self._dao = dao or NotificationDAO()
+
+    def list_notifications(self, token: str) -> List[Dict[str, Any]]:
+        """The signed-in member's inbox, newest first (RLS limits it to their own)."""
+        return [notification.to_api() for notification in self._dao.fetch_inbox(token)]
