@@ -1,10 +1,15 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import { FlatList } from 'react-native';
 import NotificationsScreen from '@/app/(app)/notifications';
 import { useNotifications } from '@/hooks/useNotifications';
 import { ItemEvent } from '@/types';
 import type { Notification } from '@/types';
+
+const mockPush = jest.fn();
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: mockPush }),
+}));
 
 jest.mock('@/hooks/useNotifications', () => ({
   useNotifications: jest.fn(),
@@ -29,14 +34,19 @@ const notification = (OHID: number, itemName: string, overrides: Partial<Notific
 });
 
 const mockRefetch = jest.fn();
+const mockMarkRead = jest.fn();
+const mockMarkAllRead = jest.fn();
 
 const withInbox = (notifications: Notification[], isLoading = false) =>
   mockUseNotifications.mockReturnValue({
     notifications,
     isLoading,
-    unreadCount: 0,
+    unreadCount: notifications.filter((n) => !n.read).length,
     refetch: mockRefetch,
     isRefetching: false,
+    markRead: mockMarkRead,
+    markAllRead: mockMarkAllRead,
+    isMarkingAllRead: false,
   });
 
 describe('NotificationsScreen', () => {
@@ -84,5 +94,56 @@ describe('NotificationsScreen', () => {
     const { queryByText } = render(<NotificationsScreen />);
 
     expect(queryByText('No notifications.')).toBeNull();
+  });
+
+  it('tapping a notification marks it read and opens its shopping list', () => {
+    withInbox([notification(1, 'Milk')]);
+
+    const { getByText } = render(<NotificationsScreen />);
+    fireEvent.press(getByText('Alex added Milk'));
+
+    expect(mockMarkRead).toHaveBeenCalledWith(1);
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(app)/list/[id]', params: { id: 3, householdId: 5 } });
+  });
+
+  it('tapping a removed item still opens its shopping list', () => {
+    withInbox([notification(1, 'Milk', { event: ItemEvent.REMOVED, sentence: 'Alex removed Milk', itemId: null })]);
+
+    const { getByText } = render(<NotificationsScreen />);
+    fireEvent.press(getByText('Alex removed Milk'));
+
+    expect(mockMarkRead).toHaveBeenCalledWith(1);
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(app)/list/[id]', params: { id: 3, householdId: 5 } });
+  });
+
+  it('tapping a notification whose list was deleted only marks it read', () => {
+    withInbox([notification(1, 'Milk', { listId: null, itemId: null })]);
+
+    const { getByText } = render(<NotificationsScreen />);
+    fireEvent.press(getByText('Alex added Milk'));
+
+    expect(mockMarkRead).toHaveBeenCalledWith(1);
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('tapping a read notification opens its list without marking it again', () => {
+    withInbox([notification(1, 'Milk', { read: true })]);
+
+    const { getByText } = render(<NotificationsScreen />);
+    fireEvent.press(getByText('Alex added Milk'));
+
+    expect(mockMarkRead).not.toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledTimes(1);
+  });
+
+  it('marks all read, offered only while something is unread', () => {
+    withInbox([notification(1, 'Milk')]);
+    const { getByText } = render(<NotificationsScreen />);
+    fireEvent.press(getByText('Mark all read'));
+    expect(mockMarkAllRead).toHaveBeenCalledTimes(1);
+
+    withInbox([notification(1, 'Milk', { read: true })]);
+    const { queryByText } = render(<NotificationsScreen />);
+    expect(queryByText('Mark all read')).toBeNull();
   });
 });

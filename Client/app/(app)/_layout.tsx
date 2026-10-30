@@ -26,7 +26,6 @@ export default function AppLayout() {
         options={{
           title: 'Notifications',
           tabBarIcon: () => <Text>🔔</Text>,
-          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
         }}
       />
       <Tabs.Screen
@@ -40,7 +39,7 @@ export default function AppLayout() {
         name="menu"
         options={{
           title: 'Menu',
-          tabBarButton: () => <BurgerMenuButton />,
+          tabBarButton: () => <BurgerMenuButton unreadCount={unreadCount} />,
         }}
       />
       <Tabs.Screen name="household" options={{ href: null }} />

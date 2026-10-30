@@ -30,6 +30,9 @@ IMPLEMENTED = {
     ("GET", "/api/households/<int:household_id>/stores"),
     ("POST", "/api/households/<int:household_id>/stores"),
     ("GET", "/api/notifications"),
+    ("GET", "/api/notifications/unread-count"),
+    ("POST", "/api/notifications/<int:notification_id>/mark-read"),
+    ("POST", "/api/notifications/mark-all-read"),
 }
 
 # Endpoints that check authentication before reaching their stub body

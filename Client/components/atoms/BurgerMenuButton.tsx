@@ -8,7 +8,11 @@ const MENU_ITEMS = [
   { label: 'Item', icon: '🛒', route: '/(app)/item/create' },
 ] as const;
 
-export function BurgerMenuButton() {
+interface BurgerMenuButtonProps {
+  unreadCount?: number;
+}
+
+export function BurgerMenuButton({ unreadCount = 0 }: BurgerMenuButtonProps) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
@@ -22,10 +26,17 @@ export function BurgerMenuButton() {
       <Pressable
         className="flex-1 items-center justify-center"
         onPress={() => setOpen(true)}
-        accessibilityLabel="Open menu"
+        accessibilityLabel={unreadCount > 0 ? `Open menu, ${unreadCount} unread notifications` : 'Open menu'}
         accessibilityRole="button"
       >
-        <Text className="text-2xl">☰</Text>
+        <View>
+          <Text className="text-2xl">☰</Text>
+          {unreadCount > 0 && (
+            <View className="absolute -top-1 -right-3 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 items-center justify-center">
+              <Text className="text-white text-[10px] font-bold">{unreadCount > 99 ? '99+' : unreadCount}</Text>
+            </View>
+          )}
+        </View>
         <Text className="text-xs text-gray-500 mt-1">Menu</Text>
       </Pressable>
 
