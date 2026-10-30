@@ -88,8 +88,6 @@ export {
   getNotification,
   markNotificationAsRead,
   markAllNotificationsAsRead,
-  deleteNotification,
-  clearReadNotifications,
 } from "./notification";
 
 // Store Service

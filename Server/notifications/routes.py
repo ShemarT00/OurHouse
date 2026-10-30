@@ -24,65 +24,57 @@ def list_notifications():
     return _notification_controller.list_notifications(g.token), 200
 
 
+@notifications_bp.route("/unread-count", methods=["GET"])
+@require_auth
+def unread_count():
+    """
+    Count the signed-in member's unread notifications from the last 30 days
+
+    Returns:
+        {"count": number}
+    """
+    return _notification_controller.unread_count(g.token), 200
+
+
 @notifications_bp.route("/<notification_id>", methods=["GET"])
 def get_notification(notification_id):
     """
     Get specific notification
-    
+
     Parameters:
         notification_id (str): Notification OHID
-    
+
     Returns:
         Notification object
     """
     abort(501)
 
 
-@notifications_bp.route("/<notification_id>/mark-read", methods=["POST"])
+@notifications_bp.route("/<int:notification_id>/mark-read", methods=["POST"])
+@require_auth
 def mark_notification_read(notification_id):
     """
-    Mark notification as read
-    
+    Mark one of the signed-in member's notifications as read
+
     Parameters:
-        notification_id (str): Notification OHID
-    
+        notification_id (int): Notification OHID
+
     Returns:
-        Updated notification object
+        Updated notification object; 404 if it is not the member's
     """
-    abort(501)
+    notification = _notification_controller.mark_read(g.token, notification_id)
+    if notification is None:
+        abort(404)
+    return notification, 200
 
 
 @notifications_bp.route("/mark-all-read", methods=["POST"])
+@require_auth
 def mark_all_read():
     """
-    Mark all notifications as read for current user
-    
+    Mark all of the signed-in member's notifications as read
+
     Returns:
-        Count of marked notifications
+        {"count": number of notifications marked}
     """
-    abort(501)
-
-
-@notifications_bp.route("/<notification_id>", methods=["DELETE"])
-def delete_notification(notification_id):
-    """
-    Delete notification
-    
-    Parameters:
-        notification_id (str): Notification OHID
-    
-    Returns:
-        Success message
-    """
-    abort(501)
-
-
-@notifications_bp.route("", methods=["DELETE"])
-def clear_read_notifications():
-    """
-    Clear all read notifications for current user
-    
-    Returns:
-        Count of deleted notifications
-    """
-    abort(501)
+    return _notification_controller.mark_all_read(g.token), 200

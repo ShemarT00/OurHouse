@@ -104,10 +104,10 @@ export const API_ENDPOINTS = {
   // Notifications
   NOTIFICATIONS: {
     LIST: "/notifications",
+    UNREAD_COUNT: "/notifications/unread-count",
     GET: (OHID: string) => `/notifications/${OHID}`,
-    MARK_READ: (OHID: string) => `/notifications/${OHID}/mark-read`,
+    MARK_READ: (OHID: number) => `/notifications/${OHID}/mark-read`,
     MARK_ALL_READ: "/notifications/mark-all-read",
-    DELETE: (OHID: string) => `/notifications/${OHID}`,
   },
 
   // Stores

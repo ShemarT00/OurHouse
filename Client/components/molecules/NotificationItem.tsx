@@ -1,13 +1,18 @@
-import { View, Text } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import type { Notification } from '../../types';
 
 interface NotificationItemProps {
   notification: Notification;
+  onPress: (notification: Notification) => void;
 }
 
-export function NotificationItem({ notification }: NotificationItemProps) {
+export function NotificationItem({ notification, onPress }: NotificationItemProps) {
   return (
-    <View className="flex-row items-start gap-3 py-3 border-b border-gray-100">
+    <Pressable
+      className="flex-row items-start gap-3 py-3 border-b border-gray-100 active:bg-gray-50"
+      onPress={() => onPress(notification)}
+      accessibilityRole="button"
+    >
       {notification.read ? (
         <View className="w-2 h-2 mt-1.5" />
       ) : (
@@ -21,6 +26,6 @@ export function NotificationItem({ notification }: NotificationItemProps) {
           {new Date(notification.createdAt).toLocaleString()}
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 }

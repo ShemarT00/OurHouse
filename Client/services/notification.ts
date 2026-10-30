@@ -3,7 +3,7 @@
  * Handles notification operations
  */
 
-import { apiGet, apiPost, apiDelete, ApiResponse } from "./api";
+import { apiGet, apiPost, ApiResponse } from "./api";
 import { API_ENDPOINTS } from "./config";
 import { Notification } from "@/types";
 
@@ -17,14 +17,12 @@ export const getNotifications = async (): Promise<
 };
 
 /**
- * Get unread notifications count
+ * Get unread notifications count (last 30 days)
  */
 export const getUnreadNotificationsCount = async (): Promise<
   ApiResponse<{ count: number }>
 > => {
-  return apiGet<{ count: number }>(
-    API_ENDPOINTS.NOTIFICATIONS.LIST + "?unread=true&count=true"
-  );
+  return apiGet<{ count: number }>(API_ENDPOINTS.NOTIFICATIONS.UNREAD_COUNT);
 };
 
 /**
@@ -40,7 +38,7 @@ export const getNotification = async (OHID: string): Promise<
  * Mark notification as read
  */
 export const markNotificationAsRead = async (
-  OHID: string
+  OHID: number
 ): Promise<ApiResponse<Notification>> => {
   return apiPost<Notification>(
     API_ENDPOINTS.NOTIFICATIONS.MARK_READ(OHID)
@@ -48,30 +46,10 @@ export const markNotificationAsRead = async (
 };
 
 /**
- * Mark all notifications as read
+ * Mark all notifications as read; returns how many changed
  */
 export const markAllNotificationsAsRead = async (): Promise<
-  ApiResponse<void>
+  ApiResponse<{ count: number }>
 > => {
-  return apiPost<void>(API_ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ);
-};
-
-/**
- * Delete notification
- */
-export const deleteNotification = async (OHID: string): Promise<
-  ApiResponse<void>
-> => {
-  return apiDelete<void>(API_ENDPOINTS.NOTIFICATIONS.DELETE(OHID));
-};
-
-/**
- * Clear all read notifications
- */
-export const clearReadNotifications = async (): Promise<
-  ApiResponse<{ deletedCount: number }>
-> => {
-  return apiDelete<{ deletedCount: number }>(
-    API_ENDPOINTS.NOTIFICATIONS.LIST + "?status=read"
-  );
+  return apiPost<{ count: number }>(API_ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ);
 };
