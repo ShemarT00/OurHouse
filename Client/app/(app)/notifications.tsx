@@ -5,7 +5,7 @@ import type { Notification } from '@/types';
 
 // The inbox: the member's notifications, newest first (the server orders them)
 export default function NotificationsScreen() {
-  const { notifications, isLoading } = useNotifications();
+  const { notifications, isLoading, refetch, isRefetching } = useNotifications();
 
   if (isLoading) {
     return (
@@ -25,6 +25,8 @@ export default function NotificationsScreen() {
         data={notifications}
         keyExtractor={(item: Notification) => String(item.OHID)}
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+        refreshing={isRefetching}
+        onRefresh={refetch}
         renderItem={({ item }) => <NotificationItem notification={item} />}
         ListEmptyComponent={
           <View className="items-center mt-20">
