@@ -5,22 +5,23 @@ Run from anywhere:  python Server/scripts/gen_client_types.py
 Server/tests/test_client_types.py fails if the committed file is out of date.
 """
 
+import json
 import pathlib
 import sys
 import typing
 from dataclasses import fields
-from enum import IntEnum
+from enum import Enum
 
 SERVER_DIR = pathlib.Path(__file__).resolve().parent.parent
 if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
-from schema import MODELS, Priority  # noqa: E402
+from schema import MODELS, ItemEvent, Priority  # noqa: E402
 from schema.base import api_field_name  # noqa: E402
 
 OUTPUT_PATH = SERVER_DIR.parent / "Client" / "types" / "generated.ts"
 
-ENUMS = (Priority,)
+ENUMS = (Priority, ItemEvent)
 
 TS_PRIMITIVES = {int: "number", str: "string", bool: "boolean"}
 
@@ -35,7 +36,7 @@ def ts_type(py_type) -> str:
     if typing.get_origin(py_type) is typing.Union and type(None) in args:
         inner = [a for a in args if a is not type(None)]
         return f"{ts_type(inner[0])} | null"
-    if isinstance(py_type, type) and issubclass(py_type, IntEnum):
+    if isinstance(py_type, type) and issubclass(py_type, Enum):
         return py_type.__name__
     if py_type in TS_PRIMITIVES:
         return TS_PRIMITIVES[py_type]
@@ -43,7 +44,10 @@ def ts_type(py_type) -> str:
 
 
 def render_enum(enum_cls) -> str:
-    members = "\n".join(f"  {m.name} = {m.value}," for m in enum_cls)
+    # Numbers as they are; strings quoted (json.dumps gives TypeScript-safe quotes)
+    members = "\n".join(
+        f"  {m.name} = {m.value if isinstance(m.value, int) else json.dumps(m.value)}," for m in enum_cls
+    )
     return f"export enum {enum_cls.__name__} {{\n{members}\n}}\n"
 
 

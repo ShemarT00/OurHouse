@@ -8,6 +8,14 @@ export enum Priority {
   HIGH = 3,
 }
 
+export enum ItemEvent {
+  ADDED = "added",
+  EDITED = "edited",
+  BOUGHT = "bought",
+  UNBOUGHT = "unbought",
+  REMOVED = "removed",
+}
+
 /** Table USER (columns USER_*) */
 export interface User {
   OHID: string;
@@ -69,9 +77,13 @@ export interface Store {
 export interface Notification {
   OHID: number;
   userId: string;
-  type: string;
-  message: string;
-  typeDesc: string | null;
+  householdId: number;
+  event: ItemEvent;
+  itemName: string;
+  sentence: string;
+  listId: number | null;
+  itemId: number | null;
+  actorId: string | null;
   read: boolean;
   createdAt: string;
 }
