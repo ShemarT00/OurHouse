@@ -81,6 +81,8 @@ export const useNotifications = () => {
     unreadCount: countQuery.data?.count ?? 0,
     isLoading: query.isLoading,
     error: query.error,
+    refetch: query.refetch,
+    isRefetching: query.isRefetching,
     markRead: markReadMutation.mutate,
     markReadAsync: markReadMutation.mutateAsync,
     markAllRead: markAllReadMutation.mutate,

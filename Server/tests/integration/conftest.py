@@ -10,7 +10,7 @@ import uuid
 import pytest
 
 import app  # noqa: F401  (loads Server/.env and the OS trust store for TLS)
-from schema import Household
+from schema import Household, ShoppingList
 
 REQUIRED_ENV = ("SUPABASE_URL", "SUPABASE_KEY", "SUPABASE_ANON_KEY")
 
@@ -67,3 +67,21 @@ def cleanup_households(admin):
     yield household_ids
     for household_id in household_ids:
         admin.table(Household.db_table()).delete().eq(Household.column("id"), household_id).execute()
+
+
+@pytest.fixture()
+def shared_household(make_user, cleanup_households):
+    """Alex's household with Sam as a second member, and one list; returns (alex, sam, household, list).
+
+    alex and sam are (user id, access token) pairs.
+    """
+    from households.HouseholdDAO import HouseholdDAO
+    from lists.ListDAO import ListDAO
+
+    alex_id, alex_token = make_user("Alex")
+    household = HouseholdDAO().create_household(alex_token, "Notify Test House")
+    cleanup_households.append(household.id)  # cascades to lists, items and notifications
+    shopping_list = ListDAO().create_list(alex_token, ShoppingList(name="Weekly shop", household_id=household.id))
+    sam_id, sam_token = make_user("Sam")
+    HouseholdDAO().join_household(sam_token, household.invite_code)
+    return (alex_id, alex_token), (sam_id, sam_token), household, shopping_list

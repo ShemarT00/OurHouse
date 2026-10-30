@@ -1,5 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
+import { FlatList } from 'react-native';
 import NotificationsScreen from '@/app/(app)/notifications';
 import { useNotifications } from '@/hooks/useNotifications';
 import { ItemEvent } from '@/types';
@@ -26,8 +27,16 @@ const notification = (OHID: number, itemName: string, overrides: Partial<Notific
   ...overrides,
 });
 
+const mockRefetch = jest.fn();
+
 const withInbox = (notifications: Notification[], isLoading = false) =>
-  mockUseNotifications.mockReturnValue({ notifications, isLoading, unreadCount: 0 });
+  mockUseNotifications.mockReturnValue({
+    notifications,
+    isLoading,
+    unreadCount: 0,
+    refetch: mockRefetch,
+    isRefetching: false,
+  });
 
 describe('NotificationsScreen', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -57,6 +66,15 @@ describe('NotificationsScreen', () => {
     const { getByText } = render(<NotificationsScreen />);
 
     expect(getByText('No notifications.')).toBeTruthy();
+  });
+
+  it('refreshes the inbox when pulled down', () => {
+    withInbox([notification(1, 'Milk')]);
+
+    const { UNSAFE_getByType } = render(<NotificationsScreen />);
+    UNSAFE_getByType(FlatList).props.onRefresh();
+
+    expect(mockRefetch).toHaveBeenCalledTimes(1);
   });
 
   it('shows a spinner while the inbox loads', () => {
