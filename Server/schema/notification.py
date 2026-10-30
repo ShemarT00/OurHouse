@@ -1,6 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
+from typing import List, Optional, TypedDict
 
 from .base import TableModel
 
@@ -13,6 +13,18 @@ class ItemEvent(str, Enum):
     BOUGHT = "bought"
     UNBOUGHT = "unbought"
     REMOVED = "removed"
+
+
+class ItemChange(TypedDict):
+    """One changed field in an Edited notification, with values as members saw them.
+
+    field is one of: list, name, quantity, priority, store, notes, bought.
+    Empty values read "Empty"; notes changes keep no text (old and new are null).
+    """
+
+    field: str
+    old: Optional[str]
+    new: Optional[str]
 
 
 @dataclass
@@ -34,6 +46,7 @@ class Notification(TableModel):
     list_id: Optional[int] = None
     item_id: Optional[int] = None
     actor_id: Optional[str] = None  # null when no one was signed in, or the actor's account is gone
+    changes: List[ItemChange] = field(default_factory=list)  # Edited only; in sentence order
     read: bool = False
     id: Optional[int] = None
     created_at: Optional[str] = None

@@ -22,6 +22,7 @@ const notification = (OHID: number, itemName: string, overrides: Partial<Notific
   listId: 3,
   itemId: 10 + OHID,
   actorId: 'alex',
+  changes: [],
   read: false,
   createdAt: '2026-10-29T10:00:00Z',
   ...overrides,

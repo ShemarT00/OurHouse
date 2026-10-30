@@ -16,6 +16,12 @@ export enum ItemEvent {
   REMOVED = "removed",
 }
 
+export interface ItemChange {
+  field: string;
+  old: string | null;
+  new: string | null;
+}
+
 /** Table USER (columns USER_*) */
 export interface User {
   OHID: string;
@@ -84,6 +90,7 @@ export interface Notification {
   listId: number | null;
   itemId: number | null;
   actorId: string | null;
+  changes: ItemChange[];
   read: boolean;
   createdAt: string;
 }
