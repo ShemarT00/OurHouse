@@ -16,12 +16,15 @@ SERVER_DIR = pathlib.Path(__file__).resolve().parent.parent
 if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
-from schema import MODELS, ItemEvent, Priority  # noqa: E402
+from schema import MODELS, ItemChange, ItemEvent, Priority  # noqa: E402
 from schema.base import api_field_name  # noqa: E402
 
 OUTPUT_PATH = SERVER_DIR.parent / "Client" / "types" / "generated.ts"
 
 ENUMS = (Priority, ItemEvent)
+
+# Shapes of structured (JSON) column values
+RECORDS = (ItemChange,)
 
 TS_PRIMITIVES = {int: "number", str: "string", bool: "boolean"}
 
@@ -36,7 +39,9 @@ def ts_type(py_type) -> str:
     if typing.get_origin(py_type) is typing.Union and type(None) in args:
         inner = [a for a in args if a is not type(None)]
         return f"{ts_type(inner[0])} | null"
-    if isinstance(py_type, type) and issubclass(py_type, Enum):
+    if typing.get_origin(py_type) is list:
+        return f"{ts_type(typing.get_args(py_type)[0])}[]"
+    if py_type in RECORDS or (isinstance(py_type, type) and issubclass(py_type, Enum)):
         return py_type.__name__
     if py_type in TS_PRIMITIVES:
         return TS_PRIMITIVES[py_type]
@@ -49,6 +54,12 @@ def render_enum(enum_cls) -> str:
         f"  {m.name} = {m.value if isinstance(m.value, int) else json.dumps(m.value)}," for m in enum_cls
     )
     return f"export enum {enum_cls.__name__} {{\n{members}\n}}\n"
+
+
+def render_record(record) -> str:
+    hints = typing.get_type_hints(record)
+    body = "\n".join(f"  {name}: {ts_type(py_type)};" for name, py_type in hints.items())
+    return f"export interface {record.__name__} {{\n{body}\n}}\n"
 
 
 def render_model(model) -> str:
@@ -67,6 +78,7 @@ def render_model(model) -> str:
 def render() -> str:
     parts = [HEADER]
     parts += [render_enum(e) for e in ENUMS]
+    parts += [render_record(r) for r in RECORDS]
     parts += [render_model(m) for m in MODELS]
     return "\n".join(parts)
 

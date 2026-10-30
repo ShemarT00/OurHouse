@@ -60,7 +60,7 @@ def test_inbox_returns_the_members_notifications_in_the_order_given(client, sign
     assert body[0] == {
         "OHID": 2, "userId": USER_ID, "householdId": 5, "event": "added", "itemName": "Bread",
         "sentence": "Alex added Bread", "listId": 3, "itemId": 12, "actorId": ACTOR_ID,
-        "read": False, "createdAt": "2026-10-29T10:00:00Z",
+        "changes": [], "read": False, "createdAt": "2026-10-29T10:00:00Z",
     }
     fetch_inbox.assert_called_once_with("good-token")
 
