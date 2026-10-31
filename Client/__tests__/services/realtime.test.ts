@@ -1,4 +1,4 @@
-import { subscribeToListItems } from '@/services/realtime';
+import { subscribeToListItems, subscribeToInbox } from '@/services/realtime';
 import { supabase } from '@/services/config';
 
 jest.mock('@/services/config', () => {
@@ -54,5 +54,20 @@ describe('subscribeToListItems', () => {
     await flush();
 
     expect(mockSupabase.channel).not.toHaveBeenCalled();
+  });
+});
+
+describe('subscribeToInbox', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("joins the member's private inbox channel and reports each new notification", async () => {
+    const onNew = jest.fn();
+    subscribeToInbox('sam', onNew);
+    await flush();
+
+    expect(mockSupabase.channel).toHaveBeenCalledWith('inbox:sam', { config: { private: true } });
+    const channel = mockSupabase.channel.mock.results[0].value;
+    channel.on.mock.calls[0][2]({ event: 'INSERT', payload: {} });
+    expect(onNew).toHaveBeenCalledTimes(1);
   });
 });

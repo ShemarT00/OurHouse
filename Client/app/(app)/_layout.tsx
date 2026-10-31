@@ -1,12 +1,13 @@
 import { Tabs, Redirect } from 'expo-router';
 import { Text } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useNotifications, useLiveNotifications } from '@/hooks/useNotifications';
 import { BurgerMenuButton } from '@/components/atoms';
 
 export default function AppLayout() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, supabaseUser } = useAuth();
   const { unreadCount } = useNotifications();
+  useLiveNotifications(supabaseUser?.id);
 
   if (!isLoading && !isAuthenticated) {
     return <Redirect href="/(auth)/login" />;
