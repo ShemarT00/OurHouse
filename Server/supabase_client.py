@@ -27,11 +27,19 @@ def get_admin_client() -> Client:
     return create_client(*_credentials())
 
 
+# Access tokens whose clients are kept, most recently used first. Each client
+# holds an open HTTPS connection, so reusing it saves a TLS handshake (~0.6 s)
+# on every query. A token's client is never used for any other token.
+USER_CLIENT_CACHE_SIZE = 256
+
+
+@lru_cache(maxsize=USER_CLIENT_CACHE_SIZE)
 def get_user_client(token: str) -> Client:
     """Return a client that sends the user's access token, so RLS policies apply.
 
     Uses the public anon key: the user's token decides what the request may do,
     so the service key (which can bypass RLS) is never sent on the user's behalf.
+    The same client is returned for the same token, until evicted from the cache.
     """
     url, service_key = _credentials()
     client = create_client(url, os.getenv("SUPABASE_ANON_KEY") or service_key)
