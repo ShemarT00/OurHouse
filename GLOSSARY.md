@@ -27,8 +27,12 @@ One thing to buy on a shopping list, with a name, quantity, urgency, store and n
 _Avoid_: Product, entry
 
 **Store**:
-A place a household buys things from, named however the household likes (a supermarket, a corner shop, a market stall). It may have a website. An item can name the store it is bought from.
-_Avoid_: Shop, retailer, supermarket, branch
+A place a household buys things from, named however the household likes (a supermarket, a corner shop, a market stall). A store is linked to a retailer, has its own website, or has neither. An item can name the store it is bought from.
+_Avoid_: Shop, supermarket, branch
+
+**Retailer**:
+An online shop OurHouse knows how to open and search, such as Tesco or Aldi. The same for every household; a store can be linked to one.
+_Avoid_: Chain, brand, provider
 
 **Item Event**:
 A change a member makes to an item: Added, Edited, Bought, Un-bought or Removed.
