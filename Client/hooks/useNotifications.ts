@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { // Notification-related API functions
   getNotifications,
@@ -6,6 +7,7 @@ import { // Notification-related API functions
   markAllNotificationsAsRead,
 } from '@/services/notification';
 import { throwIfError } from '@/services/api';
+import { subscribeToInbox } from '@/services/realtime';
 
 export const NOTIFICATIONS_KEY = ['notifications'] as const; // Query key for notifications list
 export const NOTIFICATIONS_COUNT_KEY = ['notifications', 'count'] as const; // Query key for unread notifications count
@@ -62,4 +64,20 @@ export const useNotifications = () => {
     markReadMutation,
     markAllReadMutation,
   };
+};
+
+/**
+ * Keep the inbox and unread count current while signed in: refetch both
+ * whenever the member receives a new notification. Unsubscribes on sign-out.
+ */
+export const useLiveNotifications = (userId: string | undefined) => {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!userId) return undefined;
+    return subscribeToInbox(userId, () => {
+      // NOTIFICATIONS_KEY is a prefix of NOTIFICATIONS_COUNT_KEY, so this refreshes both
+      queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
+    });
+  }, [userId, queryClient]);
 };

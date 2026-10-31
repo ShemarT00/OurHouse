@@ -9,54 +9,15 @@ Run with:  pytest -m integration
 import asyncio
 
 import pytest
-from realtime import AsyncRealtimeClient, RealtimeSubscribeStates
+from realtime import RealtimeSubscribeStates
 
 from households.HouseholdDAO import HouseholdDAO
 from items.ItemDAO import ItemDAO
 from lists.ListDAO import ListDAO
 from schema import Item, ShoppingList
+from tests.integration.conftest import QUIET_PERIOD, Listener
 
 pytestmark = pytest.mark.integration
-
-JOIN_TIMEOUT = 15  # seconds to wait for a channel join to be answered
-EVENT_TIMEOUT = 15  # seconds to wait for the expected change events
-QUIET_PERIOD = 5  # seconds an outsider is watched for stray events
-
-
-class Listener:
-    """One user's connection to a list's private channel, recording events received."""
-
-    def __init__(self, url, anon_key, token, list_id):
-        self._client = AsyncRealtimeClient(f"{url}/realtime/v1", anon_key, auto_reconnect=False)
-        self._token = token
-        self._topic = f"list:{list_id}"
-        self.events = []
-        self.state = None
-        self._answered = asyncio.Event()
-
-    def _on_state(self, state, _error):
-        self.state = state
-        self._answered.set()
-
-    async def start(self):
-        await self._client.connect()
-        await self._client.set_auth(self._token)
-        channel = self._client.channel(self._topic, {"config": {"private": True}})
-        # The Python client has no "*" wildcard (the app's JS client does), so name each event
-        for event in ("INSERT", "UPDATE", "DELETE"):
-            channel.on_broadcast(event, lambda message: self.events.append(message["event"]))
-        await channel.subscribe(self._on_state)
-        await asyncio.wait_for(self._answered.wait(), JOIN_TIMEOUT)
-
-    async def wait_for(self, count):
-        loop = asyncio.get_running_loop()
-        deadline = loop.time() + EVENT_TIMEOUT
-        while len(self.events) < count and loop.time() < deadline:
-            await asyncio.sleep(0.2)
-
-    async def stop(self):
-        await self._client.close()
-
 
 @pytest.fixture()
 def shared_list(make_user, cleanup_households):
@@ -84,8 +45,8 @@ def test_member_sees_changes_and_non_member_receives_none(supabase_env, make_use
     _, outsider_token = make_user("Outsider")
 
     async def scenario():
-        owner = Listener(url, anon_key, owner_token, shopping_list.id)
-        outsider = Listener(url, anon_key, outsider_token, shopping_list.id)
+        owner = Listener(url, anon_key, owner_token, f"list:{shopping_list.id}")
+        outsider = Listener(url, anon_key, outsider_token, f"list:{shopping_list.id}")
         try:
             await owner.start()
             await outsider.start()
