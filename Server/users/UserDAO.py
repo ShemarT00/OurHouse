@@ -25,3 +25,14 @@ class UserDAO:
         if not response.data:
             return None
         return User.from_row(response.data[0])
+
+    def update_name(self, token: str, user_id: str, name: str) -> Optional[User]:
+        """Rename a user as the signed-in user, so RLS limits it to their own row; None if no row."""
+        response = (
+            get_user_client(token)
+            .table(User.db_table())
+            .update({User.column("name"): name})
+            .eq(User.column("id"), user_id)
+            .execute()
+        )
+        return User.from_row(response.data[0]) if response.data else None
