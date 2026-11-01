@@ -37,4 +37,26 @@ describe('StoreCard', () => {
 
     expect(onEdit).toHaveBeenCalled();
   });
+
+  it('opens a linked store from its row, separately from editing it', () => {
+    const onOpen = jest.fn();
+    const onEdit = jest.fn();
+    const { getByLabelText, getByText } = render(
+      <StoreCard store={store({ retailerKey: 'tesco' })} retailer={tesco} onOpen={onOpen} onEdit={onEdit} />,
+    );
+
+    expect(getByText('Big Tesco ↗')).toBeTruthy();
+    fireEvent.press(getByLabelText('Open Big Tesco'));
+    fireEvent.press(getByLabelText('Edit Big Tesco'));
+
+    expect(onOpen).toHaveBeenCalledTimes(1);
+    expect(onEdit).toHaveBeenCalledTimes(1);
+  });
+
+  it('is not a link and shows no ↗ without one', () => {
+    const { getByText, queryByRole } = render(<StoreCard store={store()} onEdit={jest.fn()} />);
+
+    expect(getByText('Big Tesco')).toBeTruthy();
+    expect(queryByRole('link')).toBeNull();
+  });
 });

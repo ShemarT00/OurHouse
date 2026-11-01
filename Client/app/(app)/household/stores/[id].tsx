@@ -7,9 +7,12 @@ import type { StoreFormValues } from '@/components';
 import { useHousehold } from '@/hooks/useHouseholds';
 import { useStores } from '@/hooks/useStores';
 import { useRetailers } from '@/hooks/useRetailers';
+import { storeLink } from '@/utils/storeLinks';
+import { openLink } from '@/utils/openLink';
 import type { Store } from '@/types';
 
-// A household's stores, with a form to add one or edit the one being edited
+// A household's stores, with a form to add one or edit the one being edited.
+// Tapping a linked store opens its homepage.
 export default function HouseholdStoresScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -96,13 +99,17 @@ export default function HouseholdStoresScreen() {
           contentContainerClassName="gap-2 pb-6"
           refreshing={isRefetching}
           onRefresh={refetch}
-          renderItem={({ item }) => (
-            <StoreCard
-              store={item}
-              retailer={retailers.find((r) => r.key === item.retailerKey)}
-              onEdit={() => startEditing(item)}
-            />
-          )}
+          renderItem={({ item }) => {
+            const link = storeLink(item, retailers);
+            return (
+              <StoreCard
+                store={item}
+                retailer={retailers.find((r) => r.key === item.retailerKey)}
+                onOpen={link ? () => openLink(link.url) : undefined}
+                onEdit={() => startEditing(item)}
+              />
+            );
+          }}
           ListEmptyComponent={
             <View className="items-center mt-12">
               {error ? (

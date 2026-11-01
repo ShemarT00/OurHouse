@@ -46,6 +46,27 @@ describe('ItemCard', () => {
     expect(queryByText(/^at /)).toBeNull();
   });
 
+  it("shows no ↗ and is not a link when the item's store has no link", () => {
+    const { getByText, queryByRole } = render(<ItemCard item={item({ storeId: 7 })} storeName="Tesco" />);
+
+    expect(getByText('at Tesco')).toBeTruthy();
+    expect(queryByRole('link')).toBeNull();
+  });
+
+  it("opens a linked store from its own line, separately from opening the item", () => {
+    const onPress = jest.fn();
+    const onOpenStore = jest.fn();
+    const { getByRole, getByText } = render(
+      <ItemCard item={item({ storeId: 7 })} storeName="Tesco" onOpenStore={onOpenStore} onPress={onPress} />,
+    );
+
+    expect(getByText('at Tesco ↗')).toBeTruthy();
+    fireEvent.press(getByRole('link'));
+
+    expect(onOpenStore).toHaveBeenCalledTimes(1);
+    expect(onPress).not.toHaveBeenCalled();
+  });
+
   it('ticks the item off from its checkbox, separately from opening it', () => {
     const onPress = jest.fn();
     const onToggleBought = jest.fn();
