@@ -9,8 +9,9 @@
 --   * Any member of a store's household may edit its name and link. Only those
 --     columns can be updated, so a store cannot move to another household.
 --     Deleting stores is still refused (no DELETE policy).
--- Search addresses were checked by hand on 2026-11-01. A retailer whose site
--- cannot search by item name has a NULL RETA_SEARCH_URL and opens its homepage.
+-- TODO before applying: check each search address by hand (search for an
+-- item on the retailer's site and compare the address). A retailer whose site
+-- cannot search by item name gets a NULL RETA_SEARCH_URL and opens its homepage.
 -- Run against the Supabase project via the SQL editor or supabase CLI
 
 BEGIN;
