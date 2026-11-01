@@ -4,8 +4,8 @@ import { StorePicker } from '@/components/atoms/StorePicker';
 import type { Store } from '@/types';
 
 const stores: Store[] = [
-  { OHID: 7, name: 'Tesco', householdId: 5, createdAt: '' },
-  { OHID: 8, name: 'Aldi', householdId: 5, createdAt: '' },
+  { OHID: 7, name: 'Tesco', householdId: 5, createdAt: '', retailerKey: null, website: null },
+  { OHID: 8, name: 'Aldi', householdId: 5, createdAt: '', retailerKey: null, website: null },
 ];
 
 describe('StorePicker', () => {
