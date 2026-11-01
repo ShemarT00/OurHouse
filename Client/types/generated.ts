@@ -77,6 +77,17 @@ export interface Store {
   name: string;
   householdId: number;
   createdAt: string;
+  retailerKey: string | null;
+  website: string | null;
+}
+
+/** Table RETAILER (columns RETA_*) */
+export interface Retailer {
+  key: string;
+  name: string;
+  homepage: string;
+  searchUrl: string | null;
+  retired: boolean;
 }
 
 /** Table NOTIFICATION (columns NOTI_*) */

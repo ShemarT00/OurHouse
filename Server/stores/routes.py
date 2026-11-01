@@ -12,6 +12,14 @@ from stores.StoreControllers import StoreController
 _store_controller = StoreController()
 
 STORES = "/households/<int:household_id>/stores"
+STORE = STORES + "/<int:store_id>"
+
+
+def _json_body():
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        abort(400, description="Request body must be a JSON object")
+    return body
 
 
 @stores_bp.route(STORES, methods=["GET"])
@@ -43,18 +51,46 @@ def create_store(household_id):
 
     Request body:
         - name (str): Store name, unique within the household
+        - retailerKey (str, optional): the retailer the store is linked to
+        - website (str, optional): the store's own website; https:// is added
+          if no scheme is given. At most one of retailerKey and website.
 
     Returns:
         Created store object
     """
-    body = request.get_json(silent=True) or {}
-    name = body.get("name")
-    if not isinstance(name, str):
-        abort(400, description="name is required")
+    body = _json_body()
     try:
-        created = _store_controller.create_store(g.token, household_id, name)
+        created = _store_controller.create_store(g.token, household_id, body)
     except ValueError as e:
         abort(400, description=str(e))
     if created is None:
         abort(404)
     return created, 201
+
+
+@stores_bp.route(STORE, methods=["PATCH"])
+@require_auth
+def update_store(household_id, store_id):
+    """
+    Edit a store's name and/or link; any member of the household may
+
+    Parameters:
+        household_id (int): Household OHID
+        store_id (int): Store OHID
+
+    Request body (all optional, at least one):
+        - name (str)
+        - retailerKey (str or null), website (str or null): the store's link.
+          Sending either replaces the whole link, so the other is cleared.
+
+    Returns:
+        Updated store object
+    """
+    body = _json_body()
+    try:
+        updated = _store_controller.update_store(g.token, household_id, store_id, body)
+    except ValueError as e:
+        abort(400, description=str(e))
+    if updated is None:
+        abort(404)
+    return updated, 200
