@@ -1,31 +1,52 @@
-import { View, Text, TextInput, FlatList, Pressable, ActivityIndicator } from 'react-native';
+import { useState } from 'react';
+import { View, Text, FlatList, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
+import { StoreCard, StoreFormFields, EMPTY_STORE_FORM, storeFormToData, storeToForm } from '@/components';
+import type { StoreFormValues } from '@/components';
 import { useHousehold } from '@/hooks/useHouseholds';
 import { useStores } from '@/hooks/useStores';
+import { useRetailers } from '@/hooks/useRetailers';
 import type { Store } from '@/types';
 
-interface AddStoreForm {
-  name: string;
-}
-
-// A household's stores, with a field to add another
+// A household's stores, with a form to add one or edit the one being edited
 export default function HouseholdStoresScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { household } = useHousehold(id);
-  const { stores, isLoading, error, refetch, isRefetching, createStoreAsync, createMutation } = useStores(id);
+  const {
+    stores, isLoading, error, refetch, isRefetching,
+    createStoreAsync, createMutation, updateStoreAsync, updateMutation,
+  } = useStores(id);
+  const { retailers } = useRetailers();
+  const [editing, setEditing] = useState<Store | null>(null);
 
-  const { control, handleSubmit, reset, formState: { errors } } = useForm<AddStoreForm>({
-    defaultValues: { name: '' },
-  });
+  const form = useForm<StoreFormValues>({ defaultValues: EMPTY_STORE_FORM });
+  const mutation = editing ? updateMutation : createMutation;
 
-  const onSubmit = async (data: AddStoreForm) => {
+  const startEditing = (store: Store) => {
+    updateMutation.reset();
+    setEditing(store);
+    form.reset(storeToForm(store));
+  };
+
+  const stopEditing = () => {
+    createMutation.reset();
+    setEditing(null);
+    form.reset(EMPTY_STORE_FORM);
+  };
+
+  const onSubmit = async (values: StoreFormValues) => {
+    const data = storeFormToData(values, retailers);
     try {
-      await createStoreAsync({ name: data.name.trim() });
-      reset();
+      if (editing) {
+        await updateStoreAsync({ storeId: editing.OHID, data });
+      } else {
+        await createStoreAsync(data);
+      }
+      stopEditing();
     } catch {
-      // createMutation.isError is now true; the error renders under the field
+      // mutation.isError is now true; the error renders under the name
     }
   };
 
@@ -38,41 +59,33 @@ export default function HouseholdStoresScreen() {
       <Text className="text-2xl font-bold">Stores</Text>
       <Text className="text-sm text-gray-400 mt-1 mb-6">{household?.name}</Text>
 
-      <View className="flex-row gap-2">
-        <Controller
-          control={control}
-          name="name"
-          rules={{
-            required: 'Store name is required',
-            validate: (value) => value.trim().length > 0 || 'Store name is required',
-            maxLength: { value: 255, message: 'Store name must be 255 characters or fewer' },
-          }}
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-3"
-              placeholder="e.g. Tesco"
-              value={value}
-              onChangeText={onChange}
-              onSubmitEditing={handleSubmit(onSubmit)}
-              returnKeyType="done"
-            />
-          )}
-        />
+      {editing && <Text className="text-base font-semibold mb-3">{`Editing ${editing.name}`}</Text>}
+      <StoreFormFields
+        form={form}
+        retailers={retailers}
+        serverError={mutation.isError ? mutation.error?.message : undefined}
+      />
+      <View className="flex-row gap-2 mb-6">
+        {editing && (
+          <Pressable
+            className="flex-1 bg-gray-200 rounded-lg py-3 items-center active:bg-gray-300"
+            onPress={stopEditing}
+          >
+            <Text className="text-gray-800 font-semibold">Cancel</Text>
+          </Pressable>
+        )}
         <Pressable
-          className="bg-blue-600 rounded-lg px-4 justify-center active:bg-blue-700"
-          onPress={handleSubmit(onSubmit)}
-          disabled={createMutation.isPending}
+          className="flex-1 bg-blue-600 rounded-lg py-3 items-center active:bg-blue-700"
+          onPress={form.handleSubmit(onSubmit)}
+          disabled={mutation.isPending}
         >
-          {createMutation.isPending ? (
+          {mutation.isPending ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text className="text-white font-semibold">Add</Text>
+            <Text className="text-white font-semibold">{editing ? 'Save' : 'Add'}</Text>
           )}
         </Pressable>
       </View>
-      <Text className="text-red-500 text-sm mt-1 mb-4">
-        {errors.name?.message ?? (createMutation.isError ? createMutation.error?.message : '')}
-      </Text>
 
       {isLoading ? (
         <ActivityIndicator size="large" className="mt-12" />
@@ -84,9 +97,11 @@ export default function HouseholdStoresScreen() {
           refreshing={isRefetching}
           onRefresh={refetch}
           renderItem={({ item }) => (
-            <View className="border border-gray-200 rounded-xl p-4">
-              <Text className="text-base font-medium">{item.name}</Text>
-            </View>
+            <StoreCard
+              store={item}
+              retailer={retailers.find((r) => r.key === item.retailerKey)}
+              onEdit={() => startEditing(item)}
+            />
           )}
           ListEmptyComponent={
             <View className="items-center mt-12">

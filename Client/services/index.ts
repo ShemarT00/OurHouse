@@ -94,7 +94,11 @@ export {
 export {
   getHouseholdStores,
   createStore,
+  updateStore,
+  getRetailers,
   type CreateStoreData,
+  type UpdateStoreData,
+  type StoreLinkData,
 } from "./store";
 
 // Realtime Service

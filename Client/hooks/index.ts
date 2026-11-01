@@ -6,3 +6,4 @@ export * from './useLists';
 export * from './useItems';
 export * from './useNotifications';
 export * from './useStores';
+export * from './useRetailers';
