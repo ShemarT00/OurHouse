@@ -5,10 +5,11 @@ from .member import Member
 from .shopping_list import ShoppingList
 from .item import Item, Priority
 from .store import Store
+from .retailer import Retailer
 from .notification import ItemChange, ItemEvent, Notification
 
 # Every model mirrored by a database table, in generation order
-MODELS = (User, Household, Member, ShoppingList, Item, Store, Notification)
+MODELS = (User, Household, Member, ShoppingList, Item, Store, Retailer, Notification)
 
 __all__ = [
     "TableModel",
@@ -20,6 +21,7 @@ __all__ = [
     "Item",
     "Priority",
     "Store",
+    "Retailer",
     "Notification",
     "ItemEvent",
     "ItemChange",

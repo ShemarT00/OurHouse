@@ -29,6 +29,8 @@ IMPLEMENTED = {
     ("DELETE", "/api/households/<int:household_id>/shopping-lists/<int:list_id>/items/<int:item_id>"),
     ("GET", "/api/households/<int:household_id>/stores"),
     ("POST", "/api/households/<int:household_id>/stores"),
+    ("PATCH", "/api/households/<int:household_id>/stores/<int:store_id>"),
+    ("GET", "/api/retailers"),
     ("GET", "/api/notifications"),
     ("GET", "/api/notifications/unread-count"),
     ("POST", "/api/notifications/<int:notification_id>/mark-read"),
