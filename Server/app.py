@@ -65,27 +65,27 @@ def create_app(config=None):
     # Centralized error handlers
     @app.errorhandler(400)
     def bad_request(e):
-        return jsonify({"error": "Bad Request", "message": str(e)}), 400
+        return jsonify({"error": "Bad Request", "message": e.description}), 400
 
     @app.errorhandler(401)
     def unauthorized(e):
-        return jsonify({"error": "Unauthorized", "message": str(e)}), 401
+        return jsonify({"error": "Unauthorized", "message": e.description}), 401
 
     @app.errorhandler(403)
     def forbidden(e):
-        return jsonify({"error": "Forbidden", "message": str(e)}), 403
+        return jsonify({"error": "Forbidden", "message": e.description}), 403
 
     @app.errorhandler(404)
     def not_found(e):
-        return jsonify({"error": "Not Found", "message": str(e)}), 404
+        return jsonify({"error": "Not Found", "message": e.description}), 404
 
     @app.errorhandler(405)
     def method_not_allowed(e):
-        return jsonify({"error": "Method Not Allowed", "message": str(e)}), 405
+        return jsonify({"error": "Method Not Allowed", "message": e.description}), 405
 
     @app.errorhandler(501)
     def not_implemented(e):
-        return jsonify({"error": "Not Implemented", "message": str(e)}), 501
+        return jsonify({"error": "Not Implemented", "message": e.description}), 501
 
     @app.errorhandler(HTTPException)
     def handle_http_exception(e):

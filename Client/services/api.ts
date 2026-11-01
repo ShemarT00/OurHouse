@@ -165,10 +165,12 @@ const handleApiResponse = async <T>(
   }
 
   if (!response.ok) {
+    // The server writes its error messages for users ({"error", "message"})
+    const serverMessage = (data as { message?: unknown } | undefined)?.message;
     return {
       success: false,
       error: {
-        message: `HTTP ${response.status}`,
+        message: typeof serverMessage === "string" && serverMessage ? serverMessage : `HTTP ${response.status}`,
         status: response.status,
         code: `HTTP_${response.status}`,
         details: typeof data === "object" && data !== null ? (data as Record<string, unknown>) : undefined,
