@@ -7,11 +7,13 @@ interface ItemCardProps {
   item: Item;
   /** Name of the item's store, if it has one */
   storeName?: string;
+  /** Opens the store's link; only given when the store has one */
+  onOpenStore?: () => void;
   onPress?: () => void;
   onToggleBought?: () => void;
 }
 
-export function ItemCard({ item, storeName, onPress, onToggleBought }: ItemCardProps) {
+export function ItemCard({ item, storeName, onOpenStore, onPress, onToggleBought }: ItemCardProps) {
   return (
     <Pressable
       onPress={onPress}
@@ -35,7 +37,19 @@ export function ItemCard({ item, storeName, onPress, onToggleBought }: ItemCardP
           {item.name}
           {item.quantity !== null && <Text className="text-gray-500 font-normal">{`  × ${item.quantity}`}</Text>}
         </Text>
-        {storeName && <Text className="text-sm text-blue-600 mt-0.5">{`at ${storeName}`}</Text>}
+        {storeName && onOpenStore ? (
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel={`Open ${storeName}`}
+            hitSlop={8}
+            onPress={onOpenStore}
+            className="self-start mt-0.5"
+          >
+            <Text className="text-sm text-blue-600">{`at ${storeName} ↗`}</Text>
+          </Pressable>
+        ) : (
+          storeName && <Text className="text-sm text-blue-600 mt-0.5">{`at ${storeName}`}</Text>
+        )}
         {item.notes && (
           <Text className="text-sm text-gray-500 mt-0.5" numberOfLines={1}>
             {item.notes}

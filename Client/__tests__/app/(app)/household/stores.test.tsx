@@ -24,6 +24,9 @@ const mockRetailers: Retailer[] = [
 jest.mock('@/hooks/useRetailers', () => ({ useRetailers: () => ({ retailers: mockRetailers }) }));
 jest.mock('@/hooks/useStores', () => ({ useStores: jest.fn() }));
 
+const mockOpenLink = jest.fn();
+jest.mock('@/utils/openLink', () => ({ openLink: (url: string) => mockOpenLink(url) }));
+
 const store = (OHID: number, name: string, overrides: Partial<Store> = {}): Store => ({
   OHID, name, householdId: 5, createdAt: '', retailerKey: null, website: null, ...overrides,
 });
@@ -61,6 +64,23 @@ describe('HouseholdStoresScreen', () => {
     expect(getByText('Shops at Aldi')).toBeTruthy();
     expect(getByText('market.example')).toBeTruthy();
     expect(getByText('No link')).toBeTruthy();
+  });
+
+  it("opens each linked store's homepage from its row", () => {
+    withStores([
+      store(1, 'Big Tesco', { retailerKey: 'tesco' }),
+      store(2, 'Market', { website: 'https://market.example/fruit' }),
+      store(3, 'Corner shop'),
+      store(4, 'Old Shop', { retailerKey: 'gone' }),
+    ]);
+    const { getByLabelText, queryByLabelText } = render(<HouseholdStoresScreen />);
+
+    fireEvent.press(getByLabelText('Open Big Tesco'));
+    fireEvent.press(getByLabelText('Open Market'));
+
+    expect(mockOpenLink.mock.calls).toEqual([['https://www.tesco.com'], ['https://market.example/fruit']]);
+    expect(queryByLabelText('Open Corner shop')).toBeNull();
+    expect(queryByLabelText('Open Old Shop')).toBeNull();
   });
 
   it('shows an empty state', () => {
