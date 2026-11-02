@@ -36,7 +36,7 @@ describe('CreateHouseholdScreen', () => {
 
     await waitFor(() => {
       expect(mockCreateHouseholdAsync).toHaveBeenCalledWith({ name: 'The Smiths' });
-      expect(mockReplace).toHaveBeenCalledWith({ pathname: '/(app)/household/[id]', params: { id: 42 } });
+      expect(mockReplace).toHaveBeenCalledWith({ pathname: '/(app)/household/[householdId]', params: { householdId: 42 } });
     });
   });
 

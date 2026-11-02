@@ -44,8 +44,6 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen name="household" options={{ href: null }} />
-      <Tabs.Screen name="list" options={{ href: null }} />
-      <Tabs.Screen name="item" options={{ href: null }} />
     </Tabs>
   );
 }

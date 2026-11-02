@@ -1,6 +1,7 @@
 import { View, Text, FlatList, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useHouseholds } from '@/hooks/useHouseholds';
+import { NEW_HOUSEHOLD, JOIN_HOUSEHOLD, householdRoute, FROM_OUTSIDE_HOUSEHOLD } from '@/navigation/routes';
 import type { Household } from '@/types';
 
 export default function HomeScreen() {
@@ -30,13 +31,13 @@ export default function HomeScreen() {
         <View className="flex-row gap-2">
           <Pressable
             className="border border-blue-600 px-4 py-2 rounded-lg active:bg-blue-50"
-            onPress={() => router.push('/(app)/household/join')}
+            onPress={() => router.push(JOIN_HOUSEHOLD, FROM_OUTSIDE_HOUSEHOLD)}
           >
             <Text className="text-blue-600 font-semibold">Join</Text>
           </Pressable>
           <Pressable
             className="bg-blue-600 px-4 py-2 rounded-lg active:bg-blue-700"
-            onPress={() => router.push('/(app)/household/create')}
+            onPress={() => router.push(NEW_HOUSEHOLD, FROM_OUTSIDE_HOUSEHOLD)}
           >
             <Text className="text-white font-semibold">+ New</Text>
           </Pressable>
@@ -52,7 +53,9 @@ export default function HomeScreen() {
         renderItem={({ item }) => (
           <Pressable
             className="border border-gray-200 rounded-xl p-4 mb-3"
-            onPress={() => router.push({ pathname: '/(app)/household/[id]', params: { id: item.OHID } })}
+            onPress={() =>
+              router.push(householdRoute(item.OHID), FROM_OUTSIDE_HOUSEHOLD)
+            }
           >
             <Text className="text-lg font-semibold">{item.name}</Text>
           </Pressable>

@@ -15,12 +15,12 @@ import type { Store } from '@/types';
 // Tapping a linked store opens its homepage.
 export default function HouseholdStoresScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { household } = useHousehold(id);
+  const { householdId } = useLocalSearchParams<{ householdId: string }>();
+  const { household } = useHousehold(householdId);
   const {
     stores, isLoading, error, refetch, isRefetching,
     createStoreAsync, createMutation, updateStoreAsync, updateMutation,
-  } = useStores(id);
+  } = useStores(householdId);
   const { retailers } = useRetailers();
   const [editing, setEditing] = useState<Store | null>(null);
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import CreateItemScreen from '@/app/(app)/item/create';
+import CreateItemScreen from '@/app/(app)/household/[householdId]/list/[listId]/item/create';
 import { useItems } from '@/hooks/useItems';
 import { Priority } from '@/types';
 

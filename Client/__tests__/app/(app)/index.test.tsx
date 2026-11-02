@@ -45,7 +45,10 @@ describe('HomeScreen', () => {
     const { getByText } = render(<HomeScreen />);
     fireEvent.press(getByText('The Smiths'));
 
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(app)/household/[id]', params: { id: 7 } });
+    expect(mockPush).toHaveBeenCalledWith(
+      { pathname: '/(app)/household/[householdId]', params: { householdId: 7 } },
+      { withAnchor: true }
+    );
   });
 
   it('shows the empty state when the user has no households', () => {

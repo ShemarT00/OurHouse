@@ -103,7 +103,10 @@ describe('NotificationsScreen', () => {
     fireEvent.press(getByText('Alex added Milk'));
 
     expect(mockMarkRead).toHaveBeenCalledWith(1);
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(app)/list/[id]', params: { id: 3, householdId: 5 } });
+    expect(mockPush).toHaveBeenCalledWith(
+      { pathname: '/(app)/household/[householdId]/list/[listId]', params: { householdId: 5, listId: 3 } },
+      { withAnchor: true }
+    );
   });
 
   it('tapping a removed item still opens its shopping list', () => {
@@ -113,7 +116,10 @@ describe('NotificationsScreen', () => {
     fireEvent.press(getByText('Alex removed Milk'));
 
     expect(mockMarkRead).toHaveBeenCalledWith(1);
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(app)/list/[id]', params: { id: 3, householdId: 5 } });
+    expect(mockPush).toHaveBeenCalledWith(
+      { pathname: '/(app)/household/[householdId]/list/[listId]', params: { householdId: 5, listId: 3 } },
+      { withAnchor: true }
+    );
   });
 
   it('tapping a notification whose list was deleted only marks it read', () => {

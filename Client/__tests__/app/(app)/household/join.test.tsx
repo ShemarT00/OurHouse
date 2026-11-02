@@ -39,7 +39,7 @@ describe('JoinHouseholdScreen', () => {
 
     await waitFor(() => {
       expect(mockJoinHouseholdAsync).toHaveBeenCalledWith({ code: 'abcd2345' });
-      expect(mockReplace).toHaveBeenCalledWith({ pathname: '/(app)/household/[id]', params: { id: 9 } });
+      expect(mockReplace).toHaveBeenCalledWith({ pathname: '/(app)/household/[householdId]', params: { householdId: 9 } });
     });
   });
 

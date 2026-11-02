@@ -13,17 +13,17 @@ import { openLink } from '@/utils/openLink';
 // Edit or delete an item on a shopping list
 export default function ItemDetailScreen() {
   const router = useRouter();
-  const { id, householdId, listId } = useLocalSearchParams<{
-    id: string;
+  const { householdId, listId, itemId } = useLocalSearchParams<{
     householdId: string;
     listId: string;
+    itemId: string;
   }>();
   const { items, isLoading, updateItemAsync, removeItemAsync, updateMutation, deleteMutation, isRemoving } =
     useItems(householdId, listId);
   const { stores } = useStores(householdId);
   const { retailers } = useRetailers();
 
-  const item = items.find((i) => String(i.OHID) === id);
+  const item = items.find((i) => String(i.OHID) === itemId);
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm<ItemFormValues>({
     defaultValues: EMPTY_ITEM_FORM,
@@ -62,7 +62,7 @@ export default function ItemDetailScreen() {
 
   const onSubmit = async (values: ItemFormValues) => {
     try {
-      await updateItemAsync({ itemOHID: id, data: itemFormToData(values) });
+      await updateItemAsync({ itemOHID: itemId, data: itemFormToData(values) });
       router.back();
     } catch {
       // updateMutation.isError is now true; the error renders above the buttons
@@ -77,7 +77,7 @@ export default function ItemDetailScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            await removeItemAsync(id);
+            await removeItemAsync(itemId);
             router.back();
           } catch {
             // deleteMutation.isError is now true; the error renders above the buttons

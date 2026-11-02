@@ -2,6 +2,7 @@ import { View, Text, TextInput, Pressable, ActivityIndicator } from 'react-nativ
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { useHouseholds } from '@/hooks/useHouseholds';
+import { householdRoute } from '@/navigation/routes';
 
 interface JoinHouseholdForm {
   code: string;
@@ -21,7 +22,7 @@ export default function JoinHouseholdScreen() {
   const onSubmit = async (data: JoinHouseholdForm) => {
     try {
       const household = await joinHouseholdAsync({ code: data.code });
-      router.replace({ pathname: '/(app)/household/[id]', params: { id: household.OHID } });
+      router.replace(householdRoute(household.OHID));
     } catch {
       // joinMutation.isError is now true; the error renders above the button
     }
