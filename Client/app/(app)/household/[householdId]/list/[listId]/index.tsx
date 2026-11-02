@@ -6,15 +6,16 @@ import { useStores } from '@/hooks/useStores';
 import { useRetailers } from '@/hooks/useRetailers';
 import { openLink } from '@/utils/openLink';
 import { ItemList } from '@/components/organisms';
+import { newItemRoute, itemRoute } from '@/navigation/routes';
 
 export default function ListDetailScreen() {
   const router = useRouter();
-  const { id, householdId } = useLocalSearchParams<{ id: string; householdId: string }>();
-  const { list, isLoading: listLoading } = useList(householdId, id);
-  const { items, isLoading: itemsLoading, error, toggleItem, refetch, isRefetching } = useItems(householdId, id);
+  const { householdId, listId } = useLocalSearchParams<{ householdId: string; listId: string }>();
+  const { list, isLoading: listLoading } = useList(householdId, listId);
+  const { items, isLoading: itemsLoading, error, toggleItem, refetch, isRefetching } = useItems(householdId, listId);
   const { stores } = useStores(householdId);
   const { retailers } = useRetailers();
-  useLiveItems(householdId, id);
+  useLiveItems(householdId, listId);
 
   if (listLoading || itemsLoading) {
     return (
@@ -42,7 +43,7 @@ export default function ListDetailScreen() {
         <Text className="text-lg font-semibold">Items</Text>
         <Pressable
           className="bg-blue-600 px-3 py-1.5 rounded-lg active:bg-blue-700"
-          onPress={() => router.push({ pathname: '/(app)/item/create', params: { householdId, listId: id } })}
+          onPress={() => router.push(newItemRoute(householdId, listId))}
         >
           <Text className="text-white text-sm font-semibold">+ Add Item</Text>
         </Pressable>
@@ -52,9 +53,7 @@ export default function ListDetailScreen() {
         items={items}
         stores={stores}
         retailers={retailers}
-        onItemPress={(item) =>
-          router.push({ pathname: '/(app)/item/[id]', params: { id: item.OHID, householdId, listId: id } })
-        }
+        onItemPress={(item) => router.push(itemRoute(householdId, listId, item.OHID))}
         onToggleBought={(item) => toggleItem(String(item.OHID))}
         onOpenStore={openLink}
         refreshing={isRefetching}

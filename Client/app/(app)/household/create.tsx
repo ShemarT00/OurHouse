@@ -2,6 +2,7 @@ import { View, Text, TextInput, Pressable, ActivityIndicator } from 'react-nativ
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { useHouseholds } from '@/hooks/useHouseholds';
+import { householdRoute } from '@/navigation/routes';
 
 interface CreateHouseholdForm {
   name: string;
@@ -19,7 +20,7 @@ export default function CreateHouseholdScreen() {
     try {
       const household = await createHouseholdAsync({ name: data.name.trim() });
       // Open the new household so its invite code is ready to share
-      router.replace({ pathname: '/(app)/household/[id]', params: { id: household.OHID } });
+      router.replace(householdRoute(household.OHID));
     } catch {
       // createMutation.isError is now true; the error renders above the button
     }

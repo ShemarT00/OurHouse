@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import HouseholdDetailScreen from '@/app/(app)/household/[id]';
+import HouseholdDetailScreen from '@/app/(app)/household/[householdId]';
 import { useHousehold } from '@/hooks/useHouseholds';
 import { useLists } from '@/hooks/useLists';
 import { useHouseholdMembers } from '@/hooks/useHouseholdMembers';
@@ -9,7 +9,7 @@ const mockPush = jest.fn();
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, back: jest.fn() }),
-  useLocalSearchParams: () => ({ id: '5' }),
+  useLocalSearchParams: () => ({ householdId: '5' }),
 }));
 
 jest.mock('@/hooks/useHouseholds', () => ({ useHousehold: jest.fn() }));
@@ -55,7 +55,10 @@ describe('HouseholdDetailScreen — shopping lists', () => {
     const { getByText } = render(<HouseholdDetailScreen />);
     fireEvent.press(getByText('Weekly shop'));
 
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(app)/list/[id]', params: { id: 1, householdId: '5' } });
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/(app)/household/[householdId]/list/[listId]',
+      params: { householdId: '5', listId: 1 },
+    });
   });
 
   it('goes to the new list screen for this household', () => {
@@ -64,7 +67,10 @@ describe('HouseholdDetailScreen — shopping lists', () => {
     const { getByText } = render(<HouseholdDetailScreen />);
     fireEvent.press(getByText('+ New List'));
 
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(app)/list/create', params: { householdId: '5' } });
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/(app)/household/[householdId]/list/create',
+      params: { householdId: '5' },
+    });
   });
 
   it('shows an empty state, or the error if lists fail to load', () => {
@@ -81,6 +87,6 @@ describe('HouseholdDetailScreen — shopping lists', () => {
     const { getByText } = render(<HouseholdDetailScreen />);
     fireEvent.press(getByText('1 store ›'));
 
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(app)/household/stores/[id]', params: { id: '5' } });
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(app)/household/[householdId]/stores', params: { householdId: '5' } });
   });
 });

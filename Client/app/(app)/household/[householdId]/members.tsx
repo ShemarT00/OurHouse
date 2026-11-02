@@ -7,10 +7,10 @@ import { MemberList } from '@/components/organisms';
 
 export default function HouseholdMembersScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { householdId } = useLocalSearchParams<{ householdId: string }>();
   const { supabaseUser } = useAuth();
-  const { household } = useHousehold(id);
-  const { members, isLoading, error, refetch, isRefetching } = useHouseholdMembers(id);
+  const { household } = useHousehold(householdId);
+  const { members, isLoading, error, refetch, isRefetching } = useHouseholdMembers(householdId);
 
   return (
     <View className="flex-1 bg-white px-6 pt-14">

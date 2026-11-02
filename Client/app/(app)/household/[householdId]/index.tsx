@@ -4,15 +4,16 @@ import { useHousehold } from '@/hooks/useHouseholds';
 import { useLists } from '@/hooks/useLists';
 import { useHouseholdMembers } from '@/hooks/useHouseholdMembers';
 import { useStores } from '@/hooks/useStores';
+import { membersRoute, storesRoute, newListRoute, listRoute } from '@/navigation/routes';
 import type { ShoppingList } from '@/types';
 
 export default function HouseholdDetailScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { household, isLoading: householdLoading } = useHousehold(id);
-  const { lists, isLoading: listsLoading, error: listsError, refetch: refetchLists, isRefetching } = useLists(id);
-  const { members } = useHouseholdMembers(id);
-  const { stores } = useStores(id);
+  const { householdId } = useLocalSearchParams<{ householdId: string }>();
+  const { household, isLoading: householdLoading } = useHousehold(householdId);
+  const { lists, isLoading: listsLoading, error: listsError, refetch: refetchLists, isRefetching } = useLists(householdId);
+  const { members } = useHouseholdMembers(householdId);
+  const { stores } = useStores(householdId);
 
   const shareInviteCode = () => {
     if (!household) return;
@@ -42,14 +43,14 @@ export default function HouseholdDetailScreen() {
         <Text className="text-2xl font-bold">{household?.name}</Text>
         <View className="flex-row gap-4">
           <Pressable
-            onPress={() => router.push({ pathname: '/(app)/household/members/[id]', params: { id } })}
+            onPress={() => router.push(membersRoute(householdId))}
           >
             <Text className="text-sm text-blue-600 mt-1">
               {members.length} member{members.length !== 1 ? 's' : ''} ›
             </Text>
           </Pressable>
           <Pressable
-            onPress={() => router.push({ pathname: '/(app)/household/stores/[id]', params: { id } })}
+            onPress={() => router.push(storesRoute(householdId))}
           >
             <Text className="text-sm text-blue-600 mt-1">
               {stores.length} store{stores.length !== 1 ? 's' : ''} ›
@@ -74,7 +75,7 @@ export default function HouseholdDetailScreen() {
         <Text className="text-lg font-semibold">Shopping Lists</Text>
         <Pressable
           className="bg-blue-600 px-3 py-1.5 rounded-lg"
-          onPress={() => router.push({ pathname: '/(app)/list/create', params: { householdId: id } })}
+          onPress={() => router.push(newListRoute(householdId))}
         >
           <Text className="text-white text-sm font-semibold">+ New List</Text>
         </Pressable>
@@ -89,9 +90,7 @@ export default function HouseholdDetailScreen() {
         renderItem={({ item }) => (
           <Pressable
             className="border border-gray-200 rounded-xl p-4 mb-3 active:bg-gray-50"
-            onPress={() =>
-              router.push({ pathname: '/(app)/list/[id]', params: { id: item.OHID, householdId: id } })
-            }
+            onPress={() => router.push(listRoute(householdId, item.OHID))}
           >
             <Text className="text-base font-medium">{item.name}</Text>
           </Pressable>

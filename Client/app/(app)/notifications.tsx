@@ -2,6 +2,7 @@ import { View, Text, FlatList, ActivityIndicator, Pressable } from 'react-native
 import { useRouter } from 'expo-router';
 import { useNotifications } from '@/hooks/useNotifications';
 import { NotificationItem } from '@/components/molecules';
+import { listRoute, FROM_OUTSIDE_HOUSEHOLD } from '@/navigation/routes';
 import type { Notification } from '@/types';
 
 // The inbox: the member's notifications, newest first (the server orders them)
@@ -10,17 +11,15 @@ export default function NotificationsScreen() {
   const { notifications, isLoading, refetch, isRefetching, unreadCount, markRead, markAllRead, isMarkingAllRead } =
     useNotifications();
 
-  // Mark it read and open its shopping list; a removed item's list still opens.
-  // If the list itself was deleted there is nowhere to go, so it is only marked read.
+  // Mark it read and open its shopping list, with its household beneath so Back goes there;
+  // a removed item's list still opens. If the list itself was deleted there is nowhere
+  // to go, so it is only marked read.
   const openNotification = (notification: Notification) => {
     if (!notification.read) {
       markRead(notification.OHID);
     }
     if (notification.listId !== null) {
-      router.push({
-        pathname: '/(app)/list/[id]',
-        params: { id: notification.listId, householdId: notification.householdId },
-      });
+      router.push(listRoute(notification.householdId, notification.listId), FROM_OUTSIDE_HOUSEHOLD);
     }
   };
 

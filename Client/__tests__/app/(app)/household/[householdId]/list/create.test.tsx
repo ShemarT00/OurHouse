@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import CreateListScreen from '@/app/(app)/list/create';
+import CreateListScreen from '@/app/(app)/household/[householdId]/list/create';
 import { useLists } from '@/hooks/useLists';
 
 const mockBack = jest.fn();

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import ItemDetailScreen from '@/app/(app)/item/[id]';
+import ItemDetailScreen from '@/app/(app)/household/[householdId]/list/[listId]/item/[itemId]';
 import { useStores } from '@/hooks/useStores';
 import { Priority } from '@/types';
 import type { Item, Retailer, Store } from '@/types';
@@ -9,7 +9,7 @@ const mockOpenLink = jest.fn();
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({ back: jest.fn() }),
-  useLocalSearchParams: () => ({ id: '9', householdId: '5', listId: '3' }),
+  useLocalSearchParams: () => ({ householdId: '5', listId: '3', itemId: '9' }),
 }));
 
 const mockItem: Item = {

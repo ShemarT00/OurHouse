@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { View, Text, Pressable, Modal, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import type { Href } from 'expo-router';
+import { NEW_HOUSEHOLD, pickRoute, FROM_OUTSIDE_HOUSEHOLD } from '@/navigation/routes';
 
-const MENU_ITEMS = [
-  { label: 'Household', icon: '🏡', route: '/(app)/household/create' },
-  { label: 'List', icon: '📋', route: '/(app)/list/create' },
-  { label: 'Item', icon: '🛒', route: '/(app)/item/create' },
-] as const;
+// A new list or item first needs a household (and list) to go in, chosen on household/pick
+const MENU_ITEMS: { label: string; icon: string; href: Href }[] = [
+  { label: 'Household', icon: '🏡', href: NEW_HOUSEHOLD },
+  { label: 'List', icon: '📋', href: pickRoute('list') },
+  { label: 'Item', icon: '🛒', href: pickRoute('item') },
+];
 
 interface BurgerMenuButtonProps {
   unreadCount?: number;
@@ -16,9 +19,9 @@ export function BurgerMenuButton({ unreadCount = 0 }: BurgerMenuButtonProps) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
-  const handleNavigate = (route: (typeof MENU_ITEMS)[number]['route']) => {
+  const handleNavigate = (href: Href) => {
     setOpen(false);
-    router.push(route);
+    router.push(href, FROM_OUTSIDE_HOUSEHOLD);
   };
 
   return (
@@ -58,7 +61,7 @@ export function BurgerMenuButton({ unreadCount = 0 }: BurgerMenuButtonProps) {
                 className={`flex-row items-center px-5 py-4${
                   index < MENU_ITEMS.length - 1 ? ' border-b border-gray-100' : ''
                 }`}
-                onPress={() => handleNavigate(item.route)}
+                onPress={() => handleNavigate(item.href)}
               >
                 <Text className="text-lg mr-3">{item.icon}</Text>
                 <Text className="text-base font-medium text-gray-800">{item.label}</Text>

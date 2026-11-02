@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import HouseholdStoresScreen from '@/app/(app)/household/stores/[id]';
+import HouseholdStoresScreen from '@/app/(app)/household/[householdId]/stores';
 import { useStores } from '@/hooks/useStores';
 import type { Retailer, Store } from '@/types';
 
@@ -9,7 +9,7 @@ const mockUpdateStoreAsync = jest.fn();
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({ back: jest.fn() }),
-  useLocalSearchParams: () => ({ id: '5' }),
+  useLocalSearchParams: () => ({ householdId: '5' }),
 }));
 
 jest.mock('@/hooks/useHouseholds', () => ({
