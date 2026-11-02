@@ -1,5 +1,32 @@
-// Store links: a store's own website, typed by a member.
-// The rules match the server's in Server/stores/StoreControllers.py (_website).
+// Store links: where tapping a store goes, and a store's own website as typed by a member.
+// Website rules match the server's in Server/stores/StoreControllers.py (_website).
+
+import type { Retailer, Store } from '@/types';
+
+export interface StoreLink {
+  url: string;
+  /** True when the link searches the retailer for an item, false for a homepage */
+  isSearch: boolean;
+}
+
+/**
+ * Where tapping a store goes. With an item name, a retailer that can search opens
+ * its search for that name; otherwise the retailer's homepage or the store's own
+ * website. Null when the store has no link, or its retailer is retired or unknown
+ * (`retailers` holds only the ones still offered).
+ */
+export const storeLink = (store: Store, retailers: Retailer[], itemName?: string): StoreLink | null => {
+  if (store.retailerKey !== null) {
+    const retailer = retailers.find((r) => r.key === store.retailerKey && !r.retired);
+    if (!retailer) return null;
+    const query = itemName?.trim();
+    if (query && retailer.searchUrl) {
+      return { url: retailer.searchUrl.replace('{query}', encodeURIComponent(query)), isSearch: true };
+    }
+    return { url: retailer.homepage, isSearch: false };
+  }
+  return store.website ? { url: store.website, isSearch: false } : null;
+};
 
 export const WEBSITE_ERROR = 'Website must be a web address, like www.example.com';
 

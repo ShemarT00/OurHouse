@@ -3,6 +3,8 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useList } from '@/hooks/useLists';
 import { useItems, useLiveItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
+import { useRetailers } from '@/hooks/useRetailers';
+import { openLink } from '@/utils/openLink';
 import { ItemList } from '@/components/organisms';
 
 export default function ListDetailScreen() {
@@ -11,6 +13,7 @@ export default function ListDetailScreen() {
   const { list, isLoading: listLoading } = useList(householdId, id);
   const { items, isLoading: itemsLoading, error, toggleItem, refetch, isRefetching } = useItems(householdId, id);
   const { stores } = useStores(householdId);
+  const { retailers } = useRetailers();
   useLiveItems(householdId, id);
 
   if (listLoading || itemsLoading) {
@@ -48,10 +51,12 @@ export default function ListDetailScreen() {
       <ItemList
         items={items}
         stores={stores}
+        retailers={retailers}
         onItemPress={(item) =>
           router.push({ pathname: '/(app)/item/[id]', params: { id: item.OHID, householdId, listId: id } })
         }
         onToggleBought={(item) => toggleItem(String(item.OHID))}
+        onOpenStore={openLink}
         refreshing={isRefetching}
         onRefresh={refetch}
         errorMessage={error?.message}

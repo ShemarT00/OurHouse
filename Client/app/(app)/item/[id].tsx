@@ -4,8 +4,11 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { useItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
+import { useRetailers } from '@/hooks/useRetailers';
 import { ItemFormFields, EMPTY_ITEM_FORM, itemFormToData } from '@/components/organisms';
 import type { ItemFormValues } from '@/components/organisms';
+import { storeLink } from '@/utils/storeLinks';
+import { openLink } from '@/utils/openLink';
 
 // Edit or delete an item on a shopping list
 export default function ItemDetailScreen() {
@@ -18,6 +21,7 @@ export default function ItemDetailScreen() {
   const { items, isLoading, updateItemAsync, removeItemAsync, updateMutation, deleteMutation, isRemoving } =
     useItems(householdId, listId);
   const { stores } = useStores(householdId);
+  const { retailers } = useRetailers();
 
   const item = items.find((i) => String(i.OHID) === id);
 
@@ -85,13 +89,29 @@ export default function ItemDetailScreen() {
 
   const errorMessage = updateMutation.error?.message ?? deleteMutation.error?.message;
 
+  // The saved store, searched for the saved name
+  const store = stores.find((s) => s.OHID === item.storeId);
+  const link = store ? storeLink(store, retailers, item.name) : null;
+
   return (
     <ScrollView className="flex-1 bg-white" contentContainerClassName="px-6 pt-14 pb-8" keyboardShouldPersistTaps="handled">
       <Pressable className="mb-6" onPress={() => router.back()}>
         <Text className="text-blue-600">← Back</Text>
       </Pressable>
 
-      <Text className="text-2xl font-bold mb-8">Edit Item</Text>
+      <Text className={`text-2xl font-bold ${link ? 'mb-4' : 'mb-8'}`}>Edit Item</Text>
+
+      {store && link && (
+        <Pressable
+          accessibilityRole="link"
+          className="self-start border border-blue-600 rounded-lg px-4 py-2 mb-8 active:bg-blue-50"
+          onPress={() => openLink(link.url)}
+        >
+          <Text className="text-blue-600 font-semibold">
+            {`${link.isSearch ? `Search ${store.name} for this` : `Open ${store.name}`} ↗`}
+          </Text>
+        </Pressable>
+      )}
 
       <ItemFormFields control={control} errors={errors} stores={stores} />
 
