@@ -3,7 +3,7 @@ Users Routes
 API endpoints for user profile management
 """
 
-from flask import abort, g
+from flask import abort, g, request
 from auth.decorators import require_auth
 from users import users_bp
 from users.UserController import UserController
@@ -27,19 +27,28 @@ def get_user_profile():
 
 
 @users_bp.route("/profile", methods=["PUT"])
+@require_auth
 def update_user_profile():
     """
-    Update current user profile
-    
+    Change the signed-in user's name
+
     Request body:
-        - firstName (str, optional): User's first name
-        - lastName (str, optional): User's last name
-        - email (str, optional): User's email
-    
+        - name (str): New name, 1-255 characters once trimmed.
+          Other fields (e.g. email) are ignored.
+
     Returns:
-        Updated user object
+        Updated user object, the same shape as GET /profile
     """
-    abort(501)
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        abort(400, description="Request body must be a JSON object")
+    try:
+        user = _user_controller.update_name(g.token, g.user.id, body.get("name"))
+    except ValueError as e:
+        abort(400, description=str(e))
+    if user is None:
+        abort(404)
+    return user, 200
 
 
 @users_bp.route("/<user_id>", methods=["GET"])

@@ -8,9 +8,7 @@ import { API_ENDPOINTS } from "./config";
 import { User } from "@/types";
 
 export interface UpdateUserProfile {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
+  name: string;
 }
 
 /**

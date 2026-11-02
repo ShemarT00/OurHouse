@@ -15,8 +15,9 @@ export const useUserProfile = () => {
   const updateMutation = useMutation({
     mutationFn: (data: UpdateUserProfile) =>
       updateUserProfile(data).then(throwIfError),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: USER_PROFILE_KEY });
+    // The response is the updated profile, so show it now rather than after a refetch
+    onSuccess: (user) => {
+      queryClient.setQueryData(USER_PROFILE_KEY, user);
     },
   });
 
