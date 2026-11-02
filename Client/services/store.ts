@@ -1,15 +1,23 @@
 /**
  * Store API Service
- * A household's stores: where its items are bought
+ * A household's stores: where its items are bought, and the retailers a store can be linked to
  */
 
-import { apiGet, apiPost, ApiResponse } from "./api";
+import { apiGet, apiPatch, apiPost, ApiResponse } from "./api";
 import { API_ENDPOINTS } from "./config";
-import type { Store } from "@/types";
+import type { Retailer, Store } from "@/types";
 
-export interface CreateStoreData {
+/** A store's link: a retailer, its own website, or neither (never both) */
+export interface StoreLinkData {
+  retailerKey: string | null;
+  website: string | null;
+}
+
+export interface CreateStoreData extends Partial<StoreLinkData> {
   name: string;
 }
+
+export type UpdateStoreData = Partial<StoreLinkData> & { name?: string };
 
 /**
  * Get a household's stores, by name
@@ -27,13 +35,23 @@ export const createStore = async (
   householdId: string,
   data: CreateStoreData
 ): Promise<ApiResponse<Store>> => {
-  const response = await apiPost<Store>(API_ENDPOINTS.STORES.CREATE(householdId), data);
-  // Names are checked before sending, so a 400 means the household already has this store
-  if (response.error?.status === 400) {
-    return {
-      ...response,
-      error: { ...response.error, message: "This household already has a store with that name." },
-    };
-  }
-  return response;
+  return apiPost<Store>(API_ENDPOINTS.STORES.CREATE(householdId), data);
+};
+
+/**
+ * Edit a store's name and/or link; sending either link field replaces the whole link
+ */
+export const updateStore = async (
+  householdId: string,
+  storeId: number,
+  data: UpdateStoreData
+): Promise<ApiResponse<Store>> => {
+  return apiPatch<Store>(API_ENDPOINTS.STORES.UPDATE(householdId, storeId), data);
+};
+
+/**
+ * Get the retailers a store can be linked to, by name (retired ones are left out)
+ */
+export const getRetailers = async (): Promise<ApiResponse<Retailer[]>> => {
+  return apiGet<Retailer[]>(API_ENDPOINTS.RETAILERS.LIST);
 };

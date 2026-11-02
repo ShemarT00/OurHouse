@@ -114,5 +114,11 @@ export const API_ENDPOINTS = {
   STORES: {
     LIST: (householdId: string) => `/households/${householdId}/stores`,
     CREATE: (householdId: string) => `/households/${householdId}/stores`,
+    UPDATE: (householdId: string, OHID: number) => `/households/${householdId}/stores/${OHID}`,
+  },
+
+  // Retailers a store can be linked to
+  RETAILERS: {
+    LIST: "/retailers",
   },
 } as const;

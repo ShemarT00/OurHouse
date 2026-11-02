@@ -12,6 +12,7 @@ module.exports = {
     "hooks/**/*.{ts,tsx}",
     "services/**/*.{ts,tsx}",
     "stores/**/*.{ts,tsx}",
+    "utils/**/*.{ts,tsx}",
     "!**/*.d.ts",
   ],
 };
