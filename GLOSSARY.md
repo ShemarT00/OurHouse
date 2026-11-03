@@ -64,9 +64,17 @@ _Avoid_: Deleted
 ## Notifications
 
 **Notification**:
-What one member sees in their inbox about an item event in their household. The actor does not receive one.
+What one member sees in their inbox about an item event in their household. The actor does not receive one, and nor does a member who has muted the household or switched off that kind of item event.
 _Avoid_: Alert, message, activity
 
 **Inbox**:
 A member's own list of notifications from the households they belong to, each either read or unread.
 _Avoid_: Feed, activity log, notification centre
+
+**Muted**:
+A member who has muted a household gets no notifications from it until they unmute it. Notifications missed while muted are not delivered later. Muting is per household, not per account.
+_Avoid_: Silenced, paused, snoozed, do not disturb
+
+**Switched-off Event**:
+A kind of item event (such as Bought) that an account has chosen not to be notified about, in every household it belongs to.
+_Avoid_: Disabled event, filter, unsubscribed
