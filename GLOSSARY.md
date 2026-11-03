@@ -4,6 +4,10 @@ OurHouse lets the members of a household share shopping lists, so everyone knows
 
 ## Groups and people
 
+**Account**:
+A person who signs in to OurHouse. One account can be a member of several households; its settings apply across all of them.
+_Avoid_: User, profile, login
+
 **Household**:
 A group of people who share shopping lists. Today a home; later it may also be a team in an organisation.
 _Avoid_: Group, home, family
