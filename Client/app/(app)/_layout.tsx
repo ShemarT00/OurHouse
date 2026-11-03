@@ -30,10 +30,10 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="settings"
         options={{
-          title: 'Profile',
-          tabBarIcon: () => <Text>👤</Text>,
+          title: 'Settings',
+          tabBarIcon: () => <Text>⚙️</Text>,
         }}
       />
       <Tabs.Screen
