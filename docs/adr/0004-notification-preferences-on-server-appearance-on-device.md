@@ -10,4 +10,5 @@ Account settings are split by where they need to take effect. Notifications are 
 ## Consequences
 
 - A new notification preference means a migration and a change to the trigger, not just a client change.
+- Muting is stored on the member row (`MEMB_MUTED`, default false), because it belongs to one membership. Switched-off events are stored on the user row as a list of the events turned off (`USER_SWITCHED_OFF_EVENTS`, default empty), not as one column per event, so an empty list means everything is on and a new kind of event needs no new column.
 - Reinstalling the app or signing in on a new phone resets appearance, but keeps notification preferences.

@@ -76,5 +76,5 @@ A member who has muted a household gets no notifications from it until they unmu
 _Avoid_: Silenced, paused, snoozed, do not disturb
 
 **Switched-off Event**:
-A kind of item event (such as Bought) that an account has chosen not to be notified about, in every household it belongs to.
+A kind of item event (such as Edited) that an account has chosen not to be notified about, in every household it belongs to. Bought and Un-bought are always switched on or off together.
 _Avoid_: Disabled event, filter, unsubscribed
