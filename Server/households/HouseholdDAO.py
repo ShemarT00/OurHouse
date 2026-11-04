@@ -4,9 +4,9 @@ Database operations for households. Every query runs as the signed-in user,
 so Row Level Security limits results to households they are a member of.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
-from schema import Household
+from schema import Household, Member
 from supabase_client import get_user_client
 
 
@@ -29,16 +29,20 @@ class HouseholdDAO:
         rows = [row for row in rows if row]
         return Household.from_row(rows[0]) if rows else None
 
-    def fetch_households(self, token: str) -> List[Household]:
-        """Query all households the user belongs to (RLS filters out the rest)."""
+    def fetch_households(self, token: str, user_id: str) -> List[Tuple[Household, bool]]:
+        """All households the user belongs to (RLS filters out the rest), each with
+        whether the user's own membership of it is muted."""
+        membership = Member.db_table()
+        muted = Member.column("muted")
         response = (
             get_user_client(token)
             .table(Household.db_table())
-            .select("*")
+            .select(f"*, {membership}!inner({muted})")
+            .eq(f"{membership}.{Member.column('user_id')}", user_id)
             .order(Household.column("created_at"))
             .execute()
         )
-        return [Household.from_row(row) for row in response.data]
+        return [(Household.from_row(row), row[membership][0][muted]) for row in response.data]
 
     def fetch_household(self, token: str, household_id: int) -> Optional[Household]:
         """Query one household; None if it does not exist or the user is not a member."""

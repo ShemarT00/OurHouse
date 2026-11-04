@@ -55,3 +55,44 @@ def test_lists_every_member(client, signed_in, fetch_members):
 def test_non_member_or_unknown_household_is_404(client, signed_in, fetch_members):
     fetch_members.return_value = []
     assert client.get("/api/households/5/members", headers=AUTH).status_code == 404
+
+
+# PUT /api/households/<id>/muted: mute or unmute the caller's own membership (#62)
+
+@pytest.fixture()
+def set_muted(monkeypatch):
+    mock = MagicMock()
+    monkeypatch.setattr("members.MemberDAO.MemberDAO.set_muted", mock)
+    return mock
+
+
+def test_muting_requires_a_token(client):
+    assert client.put("/api/households/5/muted", json={"muted": True}).status_code == 401
+
+
+@pytest.mark.parametrize("muted", [True, False])
+def test_mutes_or_unmutes_the_callers_membership(client, signed_in, set_muted, muted):
+    set_muted.return_value = muted
+
+    response = client.put("/api/households/5/muted", json={"muted": muted}, headers=AUTH)
+
+    assert response.status_code == 200
+    assert response.get_json() == {"householdId": 5, "muted": muted}
+    set_muted.assert_called_once_with("good-token", 5, muted)
+
+
+def test_muting_a_household_you_are_not_in_is_404(client, signed_in, set_muted):
+    set_muted.return_value = None
+
+    response = client.put("/api/households/5/muted", json={"muted": True}, headers=AUTH)
+
+    assert response.status_code == 404
+    assert set(response.get_json()) == {"error", "message"}
+
+
+@pytest.mark.parametrize("body", [{}, {"muted": "yes"}, {"muted": 1}, {"muted": None}, ["muted"]])
+def test_muted_must_be_true_or_false(client, signed_in, set_muted, body):
+    response = client.put("/api/households/5/muted", json=body, headers=AUTH)
+
+    assert response.status_code == 400
+    set_muted.assert_not_called()

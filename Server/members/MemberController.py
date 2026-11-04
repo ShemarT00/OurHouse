@@ -24,3 +24,10 @@ class MemberController:
         if not members:
             return None
         return [member.to_api() for member in members]
+
+    def set_muted(self, token: str, household_id: int, muted: bool) -> Optional[Dict[str, Any]]:
+        """Mute or unmute the caller's membership; None if they are not a member."""
+        result = self._dao.set_muted(token, household_id, muted)
+        if result is None:
+            return None
+        return {"householdId": household_id, "muted": result}

@@ -5,7 +5,7 @@
 
 import { apiGet, apiPost, apiPut, apiDelete, ApiResponse } from "./api";
 import { API_ENDPOINTS } from "./config";
-import { Household } from "@/types";
+import type { Household, HouseholdMuted, MemberHousehold } from "@/types";
 
 export interface CreateHouseholdData {
   name: string;
@@ -20,12 +20,12 @@ export interface JoinHouseholdData {
 }
 
 /**
- * Get all households for current user
+ * Get all households for current user, each with whether they have muted it
  */
 export const getHouseholds = async (): Promise<
-  ApiResponse<Household[]>
+  ApiResponse<MemberHousehold[]>
 > => {
-  return apiGet<Household[]>(API_ENDPOINTS.HOUSEHOLDS.LIST);
+  return apiGet<MemberHousehold[]>(API_ENDPOINTS.HOUSEHOLDS.LIST);
 };
 
 /**
@@ -84,4 +84,14 @@ export const deleteHousehold = async (OHID: string): Promise<
   ApiResponse<void>
 > => {
   return apiDelete<void>(API_ENDPOINTS.HOUSEHOLDS.DELETE(OHID));
+};
+
+/**
+ * Mute or unmute the current user's own membership of a household
+ */
+export const setHouseholdMuted = async (
+  OHID: number,
+  muted: boolean
+): Promise<ApiResponse<HouseholdMuted>> => {
+  return apiPut<HouseholdMuted>(API_ENDPOINTS.HOUSEHOLDS.MUTED(OHID), { muted });
 };

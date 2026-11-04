@@ -10,6 +10,7 @@ const member = (overrides: Partial<Member>): Member => ({
   firstName: 'Jane',
   lastName: 'Doe',
   isAdmin: false,
+  muted: false,
   createdAt: '2026-10-21T00:00:00Z',
   ...overrides,
 });

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getHouseholds,
@@ -6,12 +7,13 @@ import {
   joinHousehold as joinHouseholdRequest,
   updateHousehold as updateHouseholdRequest,
   deleteHousehold as deleteHouseholdRequest,
+  setHouseholdMuted,
   CreateHouseholdData,
   JoinHouseholdData,
   UpdateHouseholdData,
 } from '@/services/household';
 import { throwIfError } from '@/services/api';
-import { Household } from '@/types';
+import type { MemberHousehold } from '@/types';
 
 export const HOUSEHOLDS_KEY = ['households'] as const; // Query key for households list
 export const householdKey = (OHID: string) => ['household', OHID] as const; // Query key generator for individual household
@@ -66,8 +68,8 @@ export const useHouseholds = () => {
     mutationFn: (OHID: string) => deleteHouseholdRequest(OHID).then(throwIfError),
     onMutate: async (OHID) => {
       await queryClient.cancelQueries({ queryKey: HOUSEHOLDS_KEY });
-      const previous = queryClient.getQueryData<Household[]>(HOUSEHOLDS_KEY);
-      queryClient.setQueryData<Household[]>(HOUSEHOLDS_KEY, (old = []) =>
+      const previous = queryClient.getQueryData<MemberHousehold[]>(HOUSEHOLDS_KEY);
+      queryClient.setQueryData<MemberHousehold[]>(HOUSEHOLDS_KEY, (old = []) =>
         old.filter(h => h.OHID !== Number(OHID))
       );
       return { previous };
@@ -80,6 +82,31 @@ export const useHouseholds = () => {
     onSettled: (_data, _err, OHID) => {
       queryClient.invalidateQueries({ queryKey: HOUSEHOLDS_KEY });
       queryClient.removeQueries({ queryKey: householdKey(OHID) });
+    },
+  });
+
+  /**
+   * Mute or unmute the user's own membership of a household.
+   * The switch flips straight away and flips back if saving fails.
+   */
+  // The last failed mute; kept here because muteMutation only reflects its latest call
+  const [muteError, setMuteError] = useState<Error | null>(null);
+  const showMuted = (OHID: number, muted: boolean) =>
+    queryClient.setQueryData<MemberHousehold[]>(HOUSEHOLDS_KEY, (old = []) =>
+      old.map(h => (h.OHID === OHID ? { ...h, muted } : h))
+    );
+  const muteMutation = useMutation({
+    mutationFn: ({ OHID, muted }: { OHID: number; muted: boolean }) =>
+      setHouseholdMuted(OHID, muted).then(throwIfError),
+    onMutate: async ({ OHID, muted }) => {
+      setMuteError(null);
+      await queryClient.cancelQueries({ queryKey: HOUSEHOLDS_KEY });
+      showMuted(OHID, muted);
+    },
+    // Only this household flips back, so a switch saved meanwhile keeps its new state
+    onError: (error, { OHID, muted }) => {
+      showMuted(OHID, !muted);
+      setMuteError(error);
     },
   });
 
@@ -97,6 +124,9 @@ export const useHouseholds = () => {
     updateHouseholdAsync: updateMutation.mutateAsync,
     deleteHousehold: deleteMutation.mutate,
     deleteHouseholdAsync: deleteMutation.mutateAsync,
+    setMuted: muteMutation.mutate,
+    setMutedAsync: muteMutation.mutateAsync,
+    muteError,
     isCreating: createMutation.isPending,
     isJoining: joinMutation.isPending,
     isUpdating: updateMutation.isPending,
@@ -105,6 +135,7 @@ export const useHouseholds = () => {
     joinMutation,
     updateMutation,
     deleteMutation,
+    muteMutation,
   };
 };
 
