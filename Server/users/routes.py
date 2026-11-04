@@ -51,6 +51,32 @@ def update_user_profile():
     return user, 200
 
 
+@users_bp.route("/profile/switched-off-events", methods=["PUT"])
+@require_auth
+def set_switched_off_events():
+    """
+    Replace the signed-in user's Switched-off Events: the kinds of item event
+    they are not notified about, in every household they belong to
+
+    Request body:
+        - switchedOffEvents (list[str]): item event names (added, edited,
+          bought, unbought, removed); an empty list switches everything on
+
+    Returns:
+        Updated user object, the same shape as GET /profile
+    """
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        abort(400, description="Request body must be a JSON object")
+    try:
+        user = _user_controller.set_switched_off_events(g.token, g.user.id, body.get("switchedOffEvents"))
+    except ValueError as e:
+        abort(400, description=str(e))
+    if user is None:
+        abort(404)
+    return user, 200
+
+
 @users_bp.route("/<user_id>", methods=["GET"])
 def get_user(user_id):
     """

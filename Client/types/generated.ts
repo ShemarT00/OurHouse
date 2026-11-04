@@ -27,6 +27,7 @@ export interface User {
   OHID: string;
   name: string;
   email: string;
+  switchedOffEvents: ItemEvent[];
   createdAt: string;
 }
 

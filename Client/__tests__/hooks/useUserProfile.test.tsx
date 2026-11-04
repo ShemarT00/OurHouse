@@ -8,7 +8,9 @@ import type { User } from '@/types';
 jest.mock('@/services/user', () => ({ getUserProfile: jest.fn(), updateUserProfile: jest.fn() }));
 jest.mock('@/services/api', () => ({ throwIfError: (response: { data: unknown }) => response.data }));
 
-const user = (name: string): User => ({ OHID: 'u1', name, email: 'jane@example.com', createdAt: '' });
+const user = (name: string): User => ({
+  OHID: 'u1', name, email: 'jane@example.com', createdAt: '', switchedOffEvents: [],
+});
 const ok = (data: User) => ({ data });
 
 describe('useUserProfile', () => {

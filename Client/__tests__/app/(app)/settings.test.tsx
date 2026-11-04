@@ -2,11 +2,11 @@ import React from 'react';
 import { render, fireEvent, waitFor, screen, act } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import SettingsScreen from '@/app/(app)/settings';
-import { useUserProfile } from '@/hooks/useUserProfile';
 import { getHouseholds, setHouseholdMuted } from '@/services/household';
-import type { MemberHousehold } from '@/types';
+import { getUserProfile, updateUserProfile, setSwitchedOffEvents } from '@/services/user';
+import { ItemEvent } from '@/types';
+import type { MemberHousehold, User } from '@/types';
 
-const mockUpdateProfileAsync = jest.fn();
 const mockReplace = jest.fn();
 // Signs out straight away
 const mockLogout = jest.fn((_: undefined, options?: { onSuccess?: () => void }) => options?.onSuccess?.());
@@ -15,32 +15,39 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace }) })
 jest.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({ logout: mockLogout, logoutMutation: { isPending: false } }),
 }));
-jest.mock('@/hooks/useUserProfile', () => ({ useUserProfile: jest.fn() }));
-// Households come through the real useHouseholds hook, so saving and rolling back run as in the app
+// The profile and households come through the real hooks, so saving and rolling back run as in the app
+jest.mock('@/services/user', () => ({
+  getUserProfile: jest.fn(), updateUserProfile: jest.fn(), setSwitchedOffEvents: jest.fn(),
+}));
 jest.mock('@/services/household', () => ({ getHouseholds: jest.fn(), setHouseholdMuted: jest.fn() }));
 // The real throwIfError turns a failed response into the error shown; no requests are made
 jest.mock('@/services/config', () => ({}));
+
+const user = (name: string, switchedOffEvents: ItemEvent[] = []): User => ({
+  OHID: 'u1', name, email: 'jane@example.com', createdAt: '', switchedOffEvents,
+});
+const ok = <T,>(data: T) => ({ success: true, data });
+const failed = (message: string) => ({ success: false, error: { message } });
+
+const withProfile = (name: string, switchedOffEvents: ItemEvent[] = []) =>
+  (getUserProfile as jest.Mock).mockResolvedValue(ok(user(name, switchedOffEvents)));
 
 const household = (OHID: number, name: string, muted: boolean): MemberHousehold => ({
   OHID, name, muted, inviteCode: 'ABCD2345', createdBy: 'u1', createdAt: '',
 });
 const withHouseholds = (...households: MemberHousehold[]) =>
-  (getHouseholds as jest.Mock).mockResolvedValue({ success: true, data: households });
+  (getHouseholds as jest.Mock).mockResolvedValue(ok(households));
 
 let queryClient: QueryClient;
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 );
-const renderSettings = () => render(<SettingsScreen />, { wrapper });
-
-const withProfile = (name: string, update = {}) =>
-  (useUserProfile as jest.Mock).mockReturnValue({
-    profile: { OHID: 'u1', name, email: 'jane@example.com', createdAt: '' },
-    isLoading: false,
-    error: null,
-    updateProfileAsync: mockUpdateProfileAsync,
-    updateMutation: { isPending: false, isError: false, error: null, reset: jest.fn(), ...update },
-  });
+/** Render Settings and wait for the profile to load */
+const renderSettings = async () => {
+  const view = render(<SettingsScreen />, { wrapper });
+  await screen.findByText('Settings');
+  return view;
+};
 
 describe('SettingsScreen', () => {
   beforeEach(() => {
@@ -49,130 +56,114 @@ describe('SettingsScreen', () => {
     queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false, gcTime: Infinity } },
     });
+    withProfile('Jane Doe');
     withHouseholds();
   });
 
   afterEach(async () => {
-    // Let a households fetch the test didn't wait for finish inside act
+    // Let a fetch the test didn't wait for finish inside act
     await act(async () => {});
     queryClient.clear();
   });
 
-  it("shows the account's name and email under a Profile heading", () => {
-    withProfile('Jane Doe');
-    const { getByText } = renderSettings();
+  it("shows the account's name and email under a Profile heading", async () => {
+    await renderSettings();
 
-    expect(getByText('Settings')).toBeTruthy();
-    expect(getByText('Profile')).toBeTruthy();
-    expect(getByText('Jane Doe')).toBeTruthy();
-    expect(getByText('jane@example.com')).toBeTruthy();
+    expect(screen.getByText('Profile')).toBeTruthy();
+    expect(screen.getByText('Jane Doe')).toBeTruthy();
+    expect(screen.getByText('jane@example.com')).toBeTruthy();
   });
 
-  it('signing out returns to the login screen', () => {
-    withProfile('Jane Doe');
-    const { getByText } = renderSettings();
+  it('signing out returns to the login screen', async () => {
+    await renderSettings();
 
-    fireEvent.press(getByText('Sign Out'));
+    fireEvent.press(screen.getByText('Sign Out'));
 
     expect(mockLogout).toHaveBeenCalled();
     expect(mockReplace).toHaveBeenCalledWith('/(auth)/login');
   });
 
-  it('shows the current name with an Edit button', () => {
-    withProfile('Jane Doe');
-    const { getByText } = renderSettings();
+  describe('Name', () => {
+    const editName = (to: string) => {
+      fireEvent.press(screen.getByText('Edit'));
+      fireEvent.changeText(screen.getByDisplayValue('Jane Doe'), to);
+      fireEvent.press(screen.getByText('Save'));
+    };
 
-    expect(getByText('Jane Doe')).toBeTruthy();
-    expect(getByText('Edit')).toBeTruthy();
-  });
+    it('shows the current name with an Edit button', async () => {
+      await renderSettings();
 
-  it('saves the trimmed name and returns to display mode', async () => {
-    withProfile('Jane Doe');
-    mockUpdateProfileAsync.mockResolvedValueOnce({ OHID: 'u1', name: 'New Name' });
-    const { getByText, getByDisplayValue, queryByText } = renderSettings();
+      expect(screen.getByText('Jane Doe')).toBeTruthy();
+      expect(screen.getByText('Edit')).toBeTruthy();
+    });
 
-    fireEvent.press(getByText('Edit'));
-    fireEvent.changeText(getByDisplayValue('Jane Doe'), '  New Name ');
-    fireEvent.press(getByText('Save'));
+    it('saves the trimmed name and returns to display mode', async () => {
+      (updateUserProfile as jest.Mock).mockResolvedValue(ok(user('New Name')));
+      await renderSettings();
 
-    await waitFor(() => expect(mockUpdateProfileAsync).toHaveBeenCalledWith({ name: 'New Name' }));
-    await waitFor(() => expect(queryByText('Save')).toBeNull());
-    expect(getByText('Edit')).toBeTruthy();
-  });
+      editName('  New Name ');
 
-  it('rejects a blank name without saving', async () => {
-    withProfile('Jane Doe');
-    const { getByText, getByDisplayValue, findByText } = renderSettings();
+      await waitFor(() => expect(screen.queryByText('Save')).toBeNull());
+      expect(updateUserProfile).toHaveBeenCalledWith({ name: 'New Name' });
+      expect(screen.getByText('New Name')).toBeTruthy();
+      expect(screen.getByText('Edit')).toBeTruthy();
+    });
 
-    fireEvent.press(getByText('Edit'));
-    fireEvent.changeText(getByDisplayValue('Jane Doe'), '   ');
-    fireEvent.press(getByText('Save'));
+    it('rejects a blank name without saving', async () => {
+      await renderSettings();
 
-    expect(await findByText('Name is required')).toBeTruthy();
-    expect(mockUpdateProfileAsync).not.toHaveBeenCalled();
-  });
+      editName('   ');
 
-  it('rejects a name over 255 characters without saving', async () => {
-    withProfile('Jane Doe');
-    const { getByText, getByDisplayValue, findByText } = renderSettings();
+      expect(await screen.findByText('Name is required')).toBeTruthy();
+      expect(updateUserProfile).not.toHaveBeenCalled();
+    });
 
-    fireEvent.press(getByText('Edit'));
-    fireEvent.changeText(getByDisplayValue('Jane Doe'), 'a'.repeat(256));
-    fireEvent.press(getByText('Save'));
+    it('rejects a name over 255 characters without saving', async () => {
+      await renderSettings();
 
-    expect(await findByText('Name must be 255 characters or fewer')).toBeTruthy();
-    expect(mockUpdateProfileAsync).not.toHaveBeenCalled();
-  });
+      editName('a'.repeat(256));
 
-  it('cancel restores the original name without saving', () => {
-    withProfile('Jane Doe');
-    const { getByText, getByDisplayValue, queryByDisplayValue } = renderSettings();
+      expect(await screen.findByText('Name must be 255 characters or fewer')).toBeTruthy();
+      expect(updateUserProfile).not.toHaveBeenCalled();
+    });
 
-    fireEvent.press(getByText('Edit'));
-    fireEvent.changeText(getByDisplayValue('Jane Doe'), 'Changed');
-    fireEvent.press(getByText('Cancel'));
+    it('cancel restores the original name without saving', async () => {
+      await renderSettings();
 
-    expect(getByText('Jane Doe')).toBeTruthy();
-    expect(queryByDisplayValue('Changed')).toBeNull();
-    expect(mockUpdateProfileAsync).not.toHaveBeenCalled();
-  });
+      fireEvent.press(screen.getByText('Edit'));
+      fireEvent.changeText(screen.getByDisplayValue('Jane Doe'), 'Changed');
+      fireEvent.press(screen.getByText('Cancel'));
 
-  it('shows why saving failed and stays in edit mode', async () => {
-    withProfile('Jane Doe');
-    mockUpdateProfileAsync.mockRejectedValueOnce(new Error('Name must be 1-255 characters'));
-    const { getByText, getByDisplayValue, rerender } = renderSettings();
+      expect(screen.getByText('Jane Doe')).toBeTruthy();
+      expect(screen.queryByDisplayValue('Changed')).toBeNull();
+      expect(updateUserProfile).not.toHaveBeenCalled();
+    });
 
-    fireEvent.press(getByText('Edit'));
-    fireEvent.changeText(getByDisplayValue('Jane Doe'), 'New Name');
-    fireEvent.press(getByText('Save'));
-    await waitFor(() => expect(mockUpdateProfileAsync).toHaveBeenCalled());
+    it('shows why saving failed and stays in edit mode', async () => {
+      (updateUserProfile as jest.Mock).mockResolvedValue(failed('Name must be 1-255 characters'));
+      await renderSettings();
 
-    // The mutation has now failed
-    withProfile('Jane Doe', { isError: true, error: new Error('Name must be 1-255 characters') });
-    rerender(<SettingsScreen />);
+      editName('New Name');
 
-    expect(getByText('Name must be 1-255 characters')).toBeTruthy();
-    expect(getByDisplayValue('New Name')).toBeTruthy();
-    expect(getByText('Save')).toBeTruthy();
-  });
+      expect(await screen.findByText('Name must be 1-255 characters')).toBeTruthy();
+      expect(screen.getByDisplayValue('New Name')).toBeTruthy();
+      expect(screen.getByText('Save')).toBeTruthy();
+    });
 
-  it('allows a 255-character name with spaces around it, as the server does', async () => {
-    withProfile('Jane Doe');
-    mockUpdateProfileAsync.mockResolvedValueOnce({});
-    const { getByText, getByDisplayValue } = renderSettings();
+    it('allows a 255-character name with spaces around it, as the server does', async () => {
+      (updateUserProfile as jest.Mock).mockResolvedValue(ok(user('a'.repeat(255))));
+      await renderSettings();
 
-    fireEvent.press(getByText('Edit'));
-    fireEvent.changeText(getByDisplayValue('Jane Doe'), ` ${'a'.repeat(255)} `);
-    fireEvent.press(getByText('Save'));
+      editName(` ${'a'.repeat(255)} `);
 
-    await waitFor(() => expect(mockUpdateProfileAsync).toHaveBeenCalledWith({ name: 'a'.repeat(255) }));
+      await waitFor(() => expect(updateUserProfile).toHaveBeenCalledWith({ name: 'a'.repeat(255) }));
+    });
   });
 
   describe('Notifications from each household', () => {
     it('lists every household with whether its notifications are on', async () => {
-      withProfile('Jane Doe');
       withHouseholds(household(5, 'The Smiths', false), household(6, 'Flat 4B', true));
-      renderSettings();
+      await renderSettings();
 
       expect(screen.getByText('Notifications from each household')).toBeTruthy();
       expect((await screen.findByLabelText('The Smiths')).props.value).toBe(true);
@@ -181,10 +172,9 @@ describe('SettingsScreen', () => {
     });
 
     it('flipping a switch saves straight away', async () => {
-      withProfile('Jane Doe');
       withHouseholds(household(5, 'The Smiths', false));
-      (setHouseholdMuted as jest.Mock).mockResolvedValue({ success: true, data: { householdId: 5, muted: true } });
-      renderSettings();
+      (setHouseholdMuted as jest.Mock).mockResolvedValue(ok({ householdId: 5, muted: true }));
+      await renderSettings();
 
       fireEvent(await screen.findByLabelText('The Smiths'), 'valueChange', false);
 
@@ -194,12 +184,9 @@ describe('SettingsScreen', () => {
     });
 
     it('a failed save flips the switch back and shows why', async () => {
-      withProfile('Jane Doe');
       withHouseholds(household(5, 'The Smiths', false));
-      (setHouseholdMuted as jest.Mock).mockResolvedValue({
-        success: false, error: { message: 'Something went wrong. Please try again.' },
-      });
-      renderSettings();
+      (setHouseholdMuted as jest.Mock).mockResolvedValue(failed('Something went wrong. Please try again.'));
+      await renderSettings();
 
       fireEvent(await screen.findByLabelText('The Smiths'), 'valueChange', false);
 
@@ -209,16 +196,15 @@ describe('SettingsScreen', () => {
     });
 
     it("a failed save only flips back its own household, not one saved meanwhile", async () => {
-      withProfile('Jane Doe');
       withHouseholds(household(5, 'The Smiths', false), household(6, 'Flat 4B', false));
       let failSmiths = () => {};
       (setHouseholdMuted as jest.Mock).mockImplementation((OHID: number, muted: boolean) =>
         OHID === 5
           ? new Promise((resolve) => {
-              failSmiths = () => resolve({ success: false, error: { message: 'Something went wrong. Please try again.' } });
+              failSmiths = () => resolve(failed('Something went wrong. Please try again.'));
             })
-          : Promise.resolve({ success: true, data: { householdId: OHID, muted } }));
-      renderSettings();
+          : Promise.resolve(ok({ householdId: OHID, muted })));
+      await renderSettings();
 
       fireEvent(await screen.findByLabelText('The Smiths'), 'valueChange', false);
       fireEvent(screen.getByLabelText('Flat 4B'), 'valueChange', false);
@@ -228,6 +214,88 @@ describe('SettingsScreen', () => {
       expect(await screen.findByText('Something went wrong. Please try again.')).toBeTruthy();
       expect(screen.getByLabelText('The Smiths').props.value).toBe(true);
       expect(screen.getByLabelText('Flat 4B').props.value).toBe(false);
+    });
+  });
+
+  describe('Tell me when an item is', () => {
+    const switchValue = (label: string) => screen.getByLabelText(label).props.value;
+    // The server saves the events and returns the profile
+    const savesSwitchedOff = () =>
+      (setSwitchedOffEvents as jest.Mock).mockImplementation((events: ItemEvent[]) =>
+        Promise.resolve(ok(user('Jane Doe', events))));
+
+    it('shows four switches, all on for an account with nothing switched off', async () => {
+      await renderSettings();
+
+      expect(screen.getByText('Tell me when an item is')).toBeTruthy();
+      for (const label of ['Added', 'Edited', 'Bought or un-bought', 'Removed']) {
+        expect(switchValue(label)).toBe(true);
+      }
+    });
+
+    it('shows a switch off when its events are switched off', async () => {
+      withProfile('Jane Doe', [ItemEvent.EDITED, ItemEvent.BOUGHT, ItemEvent.UNBOUGHT]);
+      await renderSettings();
+
+      expect(switchValue('Added')).toBe(true);
+      expect(switchValue('Edited')).toBe(false);
+      expect(switchValue('Bought or un-bought')).toBe(false);
+      expect(switchValue('Removed')).toBe(true);
+    });
+
+    it('flipping a switch saves straight away', async () => {
+      savesSwitchedOff();
+      await renderSettings();
+
+      fireEvent(screen.getByLabelText('Edited'), 'valueChange', false);
+
+      await waitFor(() => expect(switchValue('Edited')).toBe(false));
+      expect(setSwitchedOffEvents).toHaveBeenCalledWith([ItemEvent.EDITED]);
+    });
+
+    it('the Bought or un-bought switch switches off both events, and back on removes both', async () => {
+      withProfile('Jane Doe', [ItemEvent.ADDED]);
+      savesSwitchedOff();
+      await renderSettings();
+
+      fireEvent(screen.getByLabelText('Bought or un-bought'), 'valueChange', false);
+      await waitFor(() => expect(switchValue('Bought or un-bought')).toBe(false));
+      expect(setSwitchedOffEvents).toHaveBeenLastCalledWith([ItemEvent.ADDED, ItemEvent.BOUGHT, ItemEvent.UNBOUGHT]);
+
+      fireEvent(screen.getByLabelText('Bought or un-bought'), 'valueChange', true);
+      await waitFor(() => expect(setSwitchedOffEvents).toHaveBeenLastCalledWith([ItemEvent.ADDED]));
+      expect(switchValue('Bought or un-bought')).toBe(true);
+    });
+
+    it('a failed save flips the switch back and shows why', async () => {
+      (setSwitchedOffEvents as jest.Mock).mockResolvedValue(failed('Something went wrong. Please try again.'));
+      await renderSettings();
+
+      fireEvent(screen.getByLabelText('Removed'), 'valueChange', false);
+
+      expect(await screen.findByText('Something went wrong. Please try again.')).toBeTruthy();
+      expect(switchValue('Removed')).toBe(true);
+    });
+
+    it('a switch flipped while another is saving is saved without the one that failed', async () => {
+      let failAdded = () => {};
+      (setSwitchedOffEvents as jest.Mock)
+        .mockImplementationOnce(() => new Promise((resolve) => {
+          failAdded = () => resolve(failed('Something went wrong. Please try again.'));
+        }))
+        .mockImplementation((events: ItemEvent[]) => Promise.resolve(ok(user('Jane Doe', events))));
+      await renderSettings();
+
+      fireEvent(screen.getByLabelText('Added'), 'valueChange', false);
+      fireEvent(screen.getByLabelText('Edited'), 'valueChange', false);
+      await waitFor(() => expect(switchValue('Edited')).toBe(false));
+      await act(async () => failAdded());
+
+      expect(await screen.findByText('Something went wrong. Please try again.')).toBeTruthy();
+      await waitFor(() => expect(setSwitchedOffEvents).toHaveBeenLastCalledWith([ItemEvent.EDITED]));
+      expect(setSwitchedOffEvents).toHaveBeenCalledTimes(2);
+      expect(switchValue('Added')).toBe(true);
+      expect(switchValue('Edited')).toBe(false);
     });
   });
 });

@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from schema import User
+from schema import ItemEvent, User
 
 USER_ID = "2b1f0c3e-0000-4000-8000-000000000001"
 
@@ -57,6 +57,7 @@ def test_profile_returns_signed_in_user(client, signed_in, fetch_user):
         "name": "Jane Doe",
         "email": "jane@example.com",
         "createdAt": "2026-10-17T00:00:00Z",
+        "switchedOffEvents": [],
     }
     # Queried as the user (token passed through so RLS applies), for their own ID
     fetch_user.assert_called_once_with("good-token", USER_ID)
@@ -99,6 +100,7 @@ def test_update_name_saves_trimmed_name(client, signed_in, update_name):
         "name": "Jane Smith",
         "email": "jane@example.com",
         "createdAt": "2026-10-17T00:00:00Z",
+        "switchedOffEvents": [],
     }
     update_name.assert_called_once_with("good-token", USER_ID, "Jane Smith")
 
@@ -139,3 +141,84 @@ def test_update_name_missing_row_is_404(client, signed_in, update_name):
     update_name.return_value = None
     response = client.put("/api/users/profile", json={"name": "Jane"}, headers=AUTH)
     assert response.status_code == 404
+
+
+def test_profile_includes_the_switched_off_events(client, signed_in, fetch_user):
+    fetch_user.return_value = User(
+        id=USER_ID, name="Jane", email="jane@example.com", created_at="",
+        switched_off_events=[ItemEvent.BOUGHT, ItemEvent.UNBOUGHT],
+    )
+
+    body = client.get("/api/users/profile", headers=AUTH).get_json()
+
+    assert body["switchedOffEvents"] == ["bought", "unbought"]
+
+
+# PUT /api/users/profile/switched-off-events replaces the account's Switched-off Events (#63)
+
+SWITCHED_OFF = "/api/users/profile/switched-off-events"
+
+
+@pytest.fixture()
+def set_switched_off(monkeypatch):
+    mock = MagicMock()
+    monkeypatch.setattr("users.UserDAO.UserDAO.set_switched_off_events", mock)
+    return mock
+
+
+def test_switching_off_events_requires_a_token(client):
+    assert client.put(SWITCHED_OFF, json={"switchedOffEvents": []}).status_code == 401
+
+
+def test_switching_off_events_saves_them_and_returns_the_profile(client, signed_in, set_switched_off):
+    set_switched_off.return_value = User(
+        id=USER_ID, name="Jane", email="jane@example.com", created_at="2026-10-17T00:00:00Z",
+        switched_off_events=[ItemEvent.EDITED, ItemEvent.BOUGHT, ItemEvent.UNBOUGHT],
+    )
+
+    response = client.put(
+        SWITCHED_OFF, json={"switchedOffEvents": ["unbought", "edited", "bought", "edited"]}, headers=AUTH
+    )
+
+    assert response.status_code == 200
+    assert response.get_json() == {
+        "OHID": USER_ID,
+        "name": "Jane",
+        "email": "jane@example.com",
+        "createdAt": "2026-10-17T00:00:00Z",
+        "switchedOffEvents": ["edited", "bought", "unbought"],
+    }
+    # Each event once, in the usual order
+    set_switched_off.assert_called_once_with(
+        "good-token", USER_ID, [ItemEvent.EDITED, ItemEvent.BOUGHT, ItemEvent.UNBOUGHT]
+    )
+
+
+def test_switching_every_event_back_on_saves_an_empty_list(client, signed_in, set_switched_off):
+    set_switched_off.return_value = User(id=USER_ID, name="Jane", email="jane@example.com", created_at="")
+
+    response = client.put(SWITCHED_OFF, json={"switchedOffEvents": []}, headers=AUTH)
+
+    assert response.status_code == 200
+    set_switched_off.assert_called_once_with("good-token", USER_ID, [])
+
+
+@pytest.mark.parametrize("body", [
+    {"switchedOffEvents": ["added", "sold"]},  # unknown event
+    {"switchedOffEvents": "added"},            # not a list
+    {"switchedOffEvents": [3]},
+    {"switchedOffEvents": None},
+    {},
+    ["added"],                                 # not an object
+])
+def test_switching_off_anything_but_a_list_of_known_events_is_400(client, signed_in, set_switched_off, body):
+    response = client.put(SWITCHED_OFF, json=body, headers=AUTH)
+
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "Bad Request"
+    set_switched_off.assert_not_called()
+
+
+def test_switching_off_events_with_no_profile_row_is_404(client, signed_in, set_switched_off):
+    set_switched_off.return_value = None
+    assert client.put(SWITCHED_OFF, json={"switchedOffEvents": []}, headers=AUTH).status_code == 404

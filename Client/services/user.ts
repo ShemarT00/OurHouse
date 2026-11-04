@@ -5,7 +5,7 @@
 
 import { apiGet, apiPut, ApiResponse } from "./api";
 import { API_ENDPOINTS } from "./config";
-import { User } from "@/types";
+import type { ItemEvent, User } from "@/types";
 
 export interface UpdateUserProfile {
   name: string;
@@ -32,4 +32,13 @@ export const updateUserProfile = async (
   data: UpdateUserProfile
 ): Promise<ApiResponse<User>> => {
   return apiPut<User>(API_ENDPOINTS.USERS.UPDATE_PROFILE, data);
+};
+
+/**
+ * Replace the account's Switched-off Events; returns the updated profile
+ */
+export const setSwitchedOffEvents = async (
+  switchedOffEvents: ItemEvent[]
+): Promise<ApiResponse<User>> => {
+  return apiPut<User>(API_ENDPOINTS.USERS.SWITCHED_OFF_EVENTS, { switchedOffEvents });
 };

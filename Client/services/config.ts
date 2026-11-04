@@ -48,6 +48,7 @@ export const API_ENDPOINTS = {
   USERS: {
     PROFILE: "/users/profile",
     UPDATE_PROFILE: "/users/profile",
+    SWITCHED_OFF_EVENTS: "/users/profile/switched-off-events",
     GET_USER: (OHID: string) => `/users/${OHID}`,
   },
 
