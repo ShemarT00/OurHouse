@@ -52,6 +52,17 @@ def test_lists_every_member(client, signed_in, fetch_members):
     fetch_members.assert_called_once_with("good-token", 5)
 
 
+def test_member_list_does_not_show_who_has_muted_the_household(client, signed_in, fetch_members):
+    fetch_members.return_value = [
+        Member(id=1, user_id=USER_ID, household_id=5, first_name="Jane", last_name="Doe", muted=True),
+        Member(id=2, user_id=OTHER_ID, household_id=5, first_name="Sam", last_name="Lee", muted=False),
+    ]
+
+    body = client.get("/api/households/5/members", headers=AUTH).get_json()
+
+    assert all("muted" not in m for m in body)
+
+
 def test_non_member_or_unknown_household_is_404(client, signed_in, fetch_members):
     fetch_members.return_value = []
     assert client.get("/api/households/5/members", headers=AUTH).status_code == 404

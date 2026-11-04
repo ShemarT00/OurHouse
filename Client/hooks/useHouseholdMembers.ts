@@ -4,7 +4,7 @@ import {
   removeMemberFromHousehold,
 } from '@/services/member';
 import { throwIfError } from '@/services/api';
-import { Member } from '@/types';
+import type { HouseholdMember } from '@/types';
 
 /// Query key generator for household members
 export const membersKey = (householdId: string) =>
@@ -27,8 +27,8 @@ export const useHouseholdMembers = (householdId: string) => {
       removeMemberFromHousehold(householdId, memberOHID).then(throwIfError),
     onMutate: async (memberOHID) => { // Update the members list by removing the member immediately
       await queryClient.cancelQueries({ queryKey: membersKey(householdId) });
-      const previous = queryClient.getQueryData<Member[]>(membersKey(householdId));
-      queryClient.setQueryData<Member[]>(membersKey(householdId), (old = []) =>
+      const previous = queryClient.getQueryData<HouseholdMember[]>(membersKey(householdId));
+      queryClient.setQueryData<HouseholdMember[]>(membersKey(householdId), (old = []) =>
         old.filter(m => m.OHID !== Number(memberOHID))
       );
       return { previous };

@@ -5,15 +5,15 @@
 
 import { apiGet, apiDelete, ApiResponse } from "./api";
 import { API_ENDPOINTS } from "./config";
-import { Member } from "@/types";
+import type { HouseholdMember } from "@/types";
 
 /**
  * Get all members of a household
  */
 export const getHouseholdMembers = async (
   householdId: string
-): Promise<ApiResponse<Member[]>> => {
-  return apiGet<Member[]>(API_ENDPOINTS.MEMBERS.LIST(householdId));
+): Promise<ApiResponse<HouseholdMember[]>> => {
+  return apiGet<HouseholdMember[]>(API_ENDPOINTS.MEMBERS.LIST(householdId));
 };
 
 /**
@@ -22,8 +22,8 @@ export const getHouseholdMembers = async (
 export const getMember = async (
   householdId: string,
   OHID: string
-): Promise<ApiResponse<Member>> => {
-  return apiGet<Member>(API_ENDPOINTS.MEMBERS.GET(householdId, OHID));
+): Promise<ApiResponse<HouseholdMember>> => {
+  return apiGet<HouseholdMember>(API_ENDPOINTS.MEMBERS.GET(householdId, OHID));
 };
 
 /**

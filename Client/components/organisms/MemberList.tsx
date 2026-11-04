@@ -1,9 +1,9 @@
 import { FlatList, View, Text } from 'react-native';
-import type { Member } from '@/types';
+import type { HouseholdMember } from '@/types';
 
 // List of household members: avatar initials, full name, and Admin / You labels
 interface MemberListProps {
-  members: Member[];
+  members: HouseholdMember[];
   /** Supabase auth user ID of the viewer, to label their own row "You" */
   currentUserId?: string;
   refreshing?: boolean;
@@ -11,14 +11,14 @@ interface MemberListProps {
 }
 
 interface MemberRowProps {
-  member: Member;
+  member: HouseholdMember;
   isCurrentUser: boolean;
 }
 
-const initials = (member: Member): string =>
+const initials = (member: HouseholdMember): string =>
   `${member.firstName.charAt(0)}${member.lastName.charAt(0)}`.toUpperCase() || '?';
 
-const fullName = (member: Member): string =>
+const fullName = (member: HouseholdMember): string =>
   `${member.firstName} ${member.lastName}`.trim() || 'Unnamed member';
 
 function MemberRow({ member, isCurrentUser }: MemberRowProps) {
