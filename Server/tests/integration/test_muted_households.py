@@ -10,28 +10,13 @@ import pytest
 
 from households.HouseholdDAO import HouseholdDAO
 from items.ItemDAO import ItemDAO
-from lists.ListDAO import ListDAO
 from members.MemberDAO import MemberDAO
-from notifications.NotifDAO import NotificationDAO
-from schema import Item, ItemEvent, Member, ShoppingList
+from schema import Item, ItemEvent, Member
 from supabase_client import get_user_client
 
+from .item_events import EVERY_ITEM_EVENT, do_every_item_event, inbox_events
+
 pytestmark = pytest.mark.integration
-
-
-def _events(token):
-    """The member's notifications, oldest first, as (event, sentence)."""
-    return [(n.event, n.sentence) for n in reversed(NotificationDAO().fetch_inbox(token))]
-
-
-def _every_item_event(token, list_id):
-    """Add, edit, tick, untick and remove Milk: one of each of the five item events."""
-    dao = ItemDAO()
-    milk = dao.create_item(token, Item(name="Milk", list_id=list_id))
-    dao.update_item(token, list_id, milk.id, {"quantity": 2})
-    dao.update_item(token, list_id, milk.id, {"bought": True})
-    dao.update_item(token, list_id, milk.id, {"bought": False})
-    dao.delete_item(token, list_id, milk.id)
 
 
 def _muted(token, user_id):
@@ -53,13 +38,11 @@ def test_a_muted_member_gets_no_notification_for_any_item_event(shared_household
     _, kim_token = kim
 
     assert MemberDAO().set_muted(sam_token, household.id, True) is True
-    _every_item_event(alex_token, shopping_list.id)
+    do_every_item_event(alex_token, shopping_list.id)
 
-    assert _events(sam_token) == []
-    assert [event for event, _ in _events(kim_token)] == [
-        ItemEvent.ADDED, ItemEvent.EDITED, ItemEvent.BOUGHT, ItemEvent.UNBOUGHT, ItemEvent.REMOVED,
-    ]
-    assert _events(alex_token) == []  # the actor, as always
+    assert inbox_events(sam_token) == []
+    assert [event for event, _ in inbox_events(kim_token)] == EVERY_ITEM_EVENT
+    assert inbox_events(alex_token) == []  # the actor, as always
 
 
 def test_a_muted_member_still_notifies_others_and_is_never_notified_of_their_own_changes(shared_household):
@@ -68,24 +51,19 @@ def test_a_muted_member_still_notifies_others_and_is_never_notified_of_their_own
 
     ItemDAO().create_item(sam_token, Item(name="Bread", list_id=shopping_list.id))
 
-    assert _events(alex_token) == [(ItemEvent.ADDED, "Sam added Bread")]
-    assert _events(sam_token) == []
+    assert inbox_events(alex_token) == [(ItemEvent.ADDED, "Sam added Bread")]
+    assert inbox_events(sam_token) == []
 
 
-def test_muting_one_household_leaves_the_members_other_households_unaffected(
-    shared_household, cleanup_households
-):
+def test_muting_one_household_leaves_the_members_other_households_unaffected(shared_household, second_household):
     (alex_id, alex_token), (sam_id, sam_token), home, home_list = shared_household
-    flat = HouseholdDAO().create_household(alex_token, "Mute Test Flat")
-    cleanup_households.append(flat.id)
-    flat_list = ListDAO().create_list(alex_token, ShoppingList(name="Flat shop", household_id=flat.id))
-    HouseholdDAO().join_household(sam_token, flat.invite_code)
+    flat, flat_list = second_household
 
     MemberDAO().set_muted(sam_token, home.id, True)
     ItemDAO().create_item(alex_token, Item(name="Milk", list_id=home_list.id))
     ItemDAO().create_item(alex_token, Item(name="Eggs", list_id=flat_list.id))
 
-    assert _events(sam_token) == [(ItemEvent.ADDED, "Alex added Eggs")]
+    assert inbox_events(sam_token) == [(ItemEvent.ADDED, "Alex added Eggs")]
     assert _muted(sam_token, sam_id) == {home.id: True, flat.id: False}
     assert _muted(alex_token, alex_id) == {home.id: False, flat.id: False}
 
@@ -99,7 +77,7 @@ def test_unmuting_delivers_nothing_missed_and_new_events_arrive_again(shared_hou
     assert members.set_muted(sam_token, household.id, False) is False
     ItemDAO().create_item(alex_token, Item(name="Eggs", list_id=shopping_list.id))
 
-    assert _events(sam_token) == [(ItemEvent.ADDED, "Alex added Eggs")]
+    assert inbox_events(sam_token) == [(ItemEvent.ADDED, "Alex added Eggs")]
 
 
 def test_new_memberships_start_unmuted(shared_household):

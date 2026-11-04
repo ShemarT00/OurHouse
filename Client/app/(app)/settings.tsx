@@ -6,15 +6,25 @@ import { TextInput, SwitchRow } from '@/components';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useHouseholds } from '@/hooks/useHouseholds';
+import { ItemEvent } from '@/types';
 
 interface NameFormData {
   name: string;
 }
 
+// One switch per kind of item event; Bought and Un-bought are always switched together
+const EVENT_SWITCHES: { label: string; events: ItemEvent[] }[] = [
+  { label: 'Added', events: [ItemEvent.ADDED] },
+  { label: 'Edited', events: [ItemEvent.EDITED] },
+  { label: 'Bought or un-bought', events: [ItemEvent.BOUGHT, ItemEvent.UNBOUGHT] },
+  { label: 'Removed', events: [ItemEvent.REMOVED] },
+];
+
 export default function SettingsScreen() {
   const router = useRouter();
   const { logout, logoutMutation } = useAuth();
-  const { profile, isLoading, updateProfileAsync, updateMutation } = useUserProfile();
+  const { profile, isLoading, updateProfileAsync, updateMutation, switchedOffEvents, switchEvents, switchError } =
+    useUserProfile();
   const { households, setMuted, muteError } = useHouseholds();
   const [editingName, setEditingName] = useState(false);
   const { control, handleSubmit, reset } = useForm<NameFormData>({ defaultValues: { name: '' } });
@@ -116,6 +126,19 @@ export default function SettingsScreen() {
           <Text className="text-sm text-gray-500 mb-1">Email</Text>
           <Text className="text-base font-medium">{profile?.email ?? '—'}</Text>
         </View>
+      </View>
+
+      <View className="mb-6">
+        <Text className="text-lg font-semibold mb-1">Tell me when an item is</Text>
+        {EVENT_SWITCHES.map(({ label, events }) => (
+          <SwitchRow
+            key={label}
+            label={label}
+            value={!events.some((event) => switchedOffEvents.includes(event))}
+            onValueChange={(on) => switchEvents({ events, on })}
+          />
+        ))}
+        {switchError && <Text className="text-red-500 text-sm">{switchError.message}</Text>}
       </View>
 
       <View className="mb-6">

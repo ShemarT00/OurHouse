@@ -18,7 +18,7 @@ import pytest
 from realtime import AsyncRealtimeClient
 
 import app  # noqa: F401  (loads Server/.env and the OS trust store for TLS)
-from schema import Household, ShoppingList
+from schema import Household, ShoppingList, User
 
 REQUIRED_ENV = ("SUPABASE_URL", "SUPABASE_KEY", "SUPABASE_ANON_KEY")
 
@@ -74,7 +74,8 @@ def make_user(admin, user_pool):
     """Return a different signed-in user on each call, as (user id, access token), named first_name.
 
     The name is set before the user creates or joins a household, which is when
-    their member name is copied from it.
+    their member name is copied from it. Like a new account, the user has no
+    Switched-off Events, whatever an earlier test switched off.
     """
     pool, sign_up = user_pool
     used = 0
@@ -87,6 +88,8 @@ def make_user(admin, user_pool):
         used += 1
         admin.auth.admin.update_user_by_id(
             user_id, {"user_metadata": {"first_name": first_name, "last_name": "Test"}})
+        admin.table(User.db_table()).update({User.column("switched_off_events"): []}).eq(
+            User.column("id"), user_id).execute()
         return user_id, token
 
     return _make
@@ -116,6 +119,20 @@ def shared_household(make_user, cleanup_households):
     sam_id, sam_token = make_user("Sam")
     HouseholdDAO().join_household(sam_token, household.invite_code)
     return (alex_id, alex_token), (sam_id, sam_token), household, shopping_list
+
+
+@pytest.fixture()
+def second_household(shared_household, cleanup_households):
+    """A second household of Alex's that Sam has also joined, with one list; returns (household, list)."""
+    from households.HouseholdDAO import HouseholdDAO
+    from lists.ListDAO import ListDAO
+
+    (_, alex_token), (_, sam_token), _, _ = shared_household
+    flat = HouseholdDAO().create_household(alex_token, "Notify Test Flat")
+    cleanup_households.append(flat.id)
+    flat_list = ListDAO().create_list(alex_token, ShoppingList(name="Flat shop", household_id=flat.id))
+    HouseholdDAO().join_household(sam_token, flat.invite_code)
+    return flat, flat_list
 
 
 JOIN_TIMEOUT = 15  # seconds to wait for a channel join to be answered

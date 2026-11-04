@@ -9,7 +9,7 @@ import re
 
 import pytest
 
-from schema import MODELS, Priority
+from schema import MODELS, ItemEvent, Priority
 
 MIGRATIONS_DIR = pathlib.Path(__file__).resolve().parents[2] / "database" / "migrations"
 
@@ -66,3 +66,9 @@ def test_priority_range_matches_database_constraint():
     sql = (MIGRATIONS_DIR / "003_priority_scale.sql").read_text(encoding="utf-8")
     low, high = map(int, re.search(r"ITEM_PRIORITY BETWEEN (\d+) AND (\d+)", sql).groups())
     assert [p.value for p in Priority] == list(range(low, high + 1))
+
+
+def test_switched_off_events_constraint_allows_exactly_the_item_events():
+    sql = (MIGRATIONS_DIR / "020_switched_off_events.sql").read_text(encoding="utf-8")
+    allowed = re.search(r"USER_SWITCHED_OFF_EVENTS <@ ARRAY\[(.*?)\]", sql).group(1)
+    assert re.findall(r"'(\w+)'", allowed) == [e.value for e in ItemEvent]

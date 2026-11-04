@@ -15,7 +15,7 @@ Supabase expects in queries and returns in rows.
 
 from dataclasses import fields
 from enum import Enum
-from typing import Any, ClassVar, Dict, Tuple, Type, TypeVar
+from typing import Any, ClassVar, Dict, Optional, Tuple, Type, TypeVar, get_args, get_origin
 
 T = TypeVar("T", bound="TableModel")
 
@@ -29,6 +29,26 @@ def api_field_name(field_name: str) -> str:
         return "OHID"
     head, *rest = field_name.split("_")
     return head + "".join(part.capitalize() for part in rest)
+
+
+def _enum_type(field_type: Any) -> Optional[Type[Enum]]:
+    return field_type if isinstance(field_type, type) and issubclass(field_type, Enum) else None
+
+
+def _enum_list_type(field_type: Any) -> Optional[Type[Enum]]:
+    """The enum of a List[SomeEnum] field, else None."""
+    if get_origin(field_type) is not list:
+        return None
+    return _enum_type(get_args(field_type)[0])
+
+
+def _plain(value: Any) -> Any:
+    """An enum, or a list of enums, as the value stored and sent as JSON."""
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, list):
+        return [_plain(v) for v in value]
+    return value
 
 
 # Tables created with a quoted name in the migrations (reserved words)
@@ -66,8 +86,11 @@ class TableModel:
         values = {}
         for f in fields(cls):
             value = row.get(cls.column(f.name))
-            if isinstance(f.type, type) and issubclass(f.type, Enum) and value is not None:
-                value = f.type(value)
+            enum, enum_list = _enum_type(f.type), _enum_list_type(f.type)
+            if enum and value is not None:
+                value = enum(value)
+            elif enum_list:
+                value = [enum_list(v) for v in value or []]
             values[f.name] = value
         return cls(**values)
 
@@ -78,17 +101,12 @@ class TableModel:
             value = getattr(self, f.name)
             if value is None and f.name in self.generated_fields():
                 continue
-            if isinstance(value, Enum):
-                value = value.value
-            row[self.column(f.name)] = value
+            row[self.column(f.name)] = _plain(value)
         return row
 
     def to_api(self) -> Dict[str, Any]:
         """JSON body for the client, shaped like the generated TypeScript interface."""
         body = {}
         for f in fields(self):
-            value = getattr(self, f.name)
-            if isinstance(value, Enum):
-                value = value.value
-            body[api_field_name(f.name)] = value
+            body[api_field_name(f.name)] = _plain(getattr(self, f.name))
         return body

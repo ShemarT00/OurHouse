@@ -73,7 +73,10 @@ jest.mock('@/hooks/useStores', () => ({ useStores: () => ({ ...mockQuery, stores
 jest.mock('@/hooks/useRetailers', () => ({ useRetailers: () => ({ retailers: [] }) }));
 jest.mock('@/hooks/useHouseholdMembers', () => ({ useHouseholdMembers: () => ({ ...mockQuery, members: [] }) }));
 jest.mock('@/hooks/useUserProfile', () => ({
-  useUserProfile: () => ({ profile: undefined, isLoading: false, updateProfileAsync: jest.fn(), updateMutation: mockMutation }),
+  useUserProfile: () => ({
+    profile: undefined, isLoading: false, updateProfileAsync: jest.fn(), updateMutation: mockMutation,
+    switchedOffEvents: [], switchEvents: jest.fn(), switchError: null,
+  }),
 }));
 
 // Every screen in the stack stays mounted; the focused one renders last

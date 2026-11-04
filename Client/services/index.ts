@@ -37,6 +37,7 @@ export {
   getUserProfile,
   getUser,
   updateUserProfile,
+  setSwitchedOffEvents,
   type UpdateUserProfile,
 } from "./user";
 
@@ -47,6 +48,7 @@ export {
   createHousehold,
   updateHousehold,
   deleteHousehold,
+  setHouseholdMuted,
   type CreateHouseholdData,
   type UpdateHouseholdData,
 } from "./household";
