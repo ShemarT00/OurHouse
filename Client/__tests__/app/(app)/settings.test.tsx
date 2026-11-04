@@ -1,13 +1,16 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import ProfileScreen from '@/app/(app)/profile';
+import SettingsScreen from '@/app/(app)/settings';
 import { useUserProfile } from '@/hooks/useUserProfile';
 
 const mockUpdateProfileAsync = jest.fn();
+const mockReplace = jest.fn();
+// Signs out straight away
+const mockLogout = jest.fn((_: undefined, options?: { onSuccess?: () => void }) => options?.onSuccess?.());
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ replace: jest.fn() }) }));
+jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace }) }));
 jest.mock('@/hooks/useAuth', () => ({
-  useAuth: () => ({ logout: jest.fn(), logoutMutation: { isPending: false } }),
+  useAuth: () => ({ logout: mockLogout, logoutMutation: { isPending: false } }),
 }));
 jest.mock('@/hooks/useUserProfile', () => ({ useUserProfile: jest.fn() }));
 
@@ -20,12 +23,32 @@ const withProfile = (name: string, update = {}) =>
     updateMutation: { isPending: false, isError: false, error: null, reset: jest.fn(), ...update },
   });
 
-describe('ProfileScreen', () => {
+describe('SettingsScreen', () => {
   beforeEach(() => jest.clearAllMocks());
+
+  it("shows the account's name and email under a Profile heading", () => {
+    withProfile('Jane Doe');
+    const { getByText } = render(<SettingsScreen />);
+
+    expect(getByText('Settings')).toBeTruthy();
+    expect(getByText('Profile')).toBeTruthy();
+    expect(getByText('Jane Doe')).toBeTruthy();
+    expect(getByText('jane@example.com')).toBeTruthy();
+  });
+
+  it('signing out returns to the login screen', () => {
+    withProfile('Jane Doe');
+    const { getByText } = render(<SettingsScreen />);
+
+    fireEvent.press(getByText('Sign Out'));
+
+    expect(mockLogout).toHaveBeenCalled();
+    expect(mockReplace).toHaveBeenCalledWith('/(auth)/login');
+  });
 
   it('shows the current name with an Edit button', () => {
     withProfile('Jane Doe');
-    const { getByText } = render(<ProfileScreen />);
+    const { getByText } = render(<SettingsScreen />);
 
     expect(getByText('Jane Doe')).toBeTruthy();
     expect(getByText('Edit')).toBeTruthy();
@@ -34,7 +57,7 @@ describe('ProfileScreen', () => {
   it('saves the trimmed name and returns to display mode', async () => {
     withProfile('Jane Doe');
     mockUpdateProfileAsync.mockResolvedValueOnce({ OHID: 'u1', name: 'New Name' });
-    const { getByText, getByDisplayValue, queryByText } = render(<ProfileScreen />);
+    const { getByText, getByDisplayValue, queryByText } = render(<SettingsScreen />);
 
     fireEvent.press(getByText('Edit'));
     fireEvent.changeText(getByDisplayValue('Jane Doe'), '  New Name ');
@@ -47,7 +70,7 @@ describe('ProfileScreen', () => {
 
   it('rejects a blank name without saving', async () => {
     withProfile('Jane Doe');
-    const { getByText, getByDisplayValue, findByText } = render(<ProfileScreen />);
+    const { getByText, getByDisplayValue, findByText } = render(<SettingsScreen />);
 
     fireEvent.press(getByText('Edit'));
     fireEvent.changeText(getByDisplayValue('Jane Doe'), '   ');
@@ -59,7 +82,7 @@ describe('ProfileScreen', () => {
 
   it('rejects a name over 255 characters without saving', async () => {
     withProfile('Jane Doe');
-    const { getByText, getByDisplayValue, findByText } = render(<ProfileScreen />);
+    const { getByText, getByDisplayValue, findByText } = render(<SettingsScreen />);
 
     fireEvent.press(getByText('Edit'));
     fireEvent.changeText(getByDisplayValue('Jane Doe'), 'a'.repeat(256));
@@ -71,7 +94,7 @@ describe('ProfileScreen', () => {
 
   it('cancel restores the original name without saving', () => {
     withProfile('Jane Doe');
-    const { getByText, getByDisplayValue, queryByDisplayValue } = render(<ProfileScreen />);
+    const { getByText, getByDisplayValue, queryByDisplayValue } = render(<SettingsScreen />);
 
     fireEvent.press(getByText('Edit'));
     fireEvent.changeText(getByDisplayValue('Jane Doe'), 'Changed');
@@ -85,7 +108,7 @@ describe('ProfileScreen', () => {
   it('shows why saving failed and stays in edit mode', async () => {
     withProfile('Jane Doe');
     mockUpdateProfileAsync.mockRejectedValueOnce(new Error('Name must be 1-255 characters'));
-    const { getByText, getByDisplayValue, rerender } = render(<ProfileScreen />);
+    const { getByText, getByDisplayValue, rerender } = render(<SettingsScreen />);
 
     fireEvent.press(getByText('Edit'));
     fireEvent.changeText(getByDisplayValue('Jane Doe'), 'New Name');
@@ -94,7 +117,7 @@ describe('ProfileScreen', () => {
 
     // The mutation has now failed
     withProfile('Jane Doe', { isError: true, error: new Error('Name must be 1-255 characters') });
-    rerender(<ProfileScreen />);
+    rerender(<SettingsScreen />);
 
     expect(getByText('Name must be 1-255 characters')).toBeTruthy();
     expect(getByDisplayValue('New Name')).toBeTruthy();
@@ -104,7 +127,7 @@ describe('ProfileScreen', () => {
   it('allows a 255-character name with spaces around it, as the server does', async () => {
     withProfile('Jane Doe');
     mockUpdateProfileAsync.mockResolvedValueOnce({});
-    const { getByText, getByDisplayValue } = render(<ProfileScreen />);
+    const { getByText, getByDisplayValue } = render(<SettingsScreen />);
 
     fireEvent.press(getByText('Edit'));
     fireEvent.changeText(getByDisplayValue('Jane Doe'), ` ${'a'.repeat(255)} `);

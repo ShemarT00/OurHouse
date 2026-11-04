@@ -254,3 +254,16 @@ describe('Household → Shopping List → Item navigation', () => {
     expect(screen).toHavePathname('/');
   });
 });
+
+describe('Tab bar', () => {
+  it('the Settings tab opens Settings, and there is no Profile tab', () => {
+    start('/');
+    // Tab buttons are labelled "<title>, tab, n of m"
+    expect(screen.queryByLabelText(/^Profile, tab/)).toBeNull();
+
+    fireEvent.press(screen.getByLabelText(/^Settings, tab/));
+
+    expect(screen).toHavePathname('/settings');
+    expect(screen.getByText('Sign Out')).toBeTruthy();
+  });
+});
