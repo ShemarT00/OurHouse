@@ -28,7 +28,7 @@ def _member_rows(token, household_id):
 
 def test_only_members_can_read_a_household(make_user, cleanup_households):
     owner_id, owner_token = make_user("Owner")
-    _, outsider_token = make_user("Outsider")
+    outsider_id, outsider_token = make_user("Outsider")
     dao = HouseholdDAO()
 
     household = dao.create_household(owner_token, "RLS Test House")
@@ -42,11 +42,11 @@ def test_only_members_can_read_a_household(make_user, cleanup_households):
 
     # The creator can read it
     assert dao.fetch_household(owner_token, household.id) == household
-    assert household.id in [h.id for h in dao.fetch_households(owner_token)]
+    assert household.id in [h.id for h, _ in dao.fetch_households(owner_token, owner_id)]
 
     # A signed-in non-member sees nothing: not the household, not its members
     assert dao.fetch_household(outsider_token, household.id) is None
-    assert household.id not in [h.id for h in dao.fetch_households(outsider_token)]
+    assert household.id not in [h.id for h, _ in dao.fetch_households(outsider_token, outsider_id)]
     assert _member_rows(outsider_token, household.id) == []
 
 

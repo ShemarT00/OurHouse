@@ -35,9 +35,12 @@ class HouseholdController:
         household = self._dao.join_household(token, invite_code)
         return None if household is None else household.to_api()
 
-    def list_households(self, token: str) -> List[Dict[str, Any]]:
-        """Households the signed-in user is a member of"""
-        return [household.to_api() for household in self._dao.fetch_households(token)]
+    def list_households(self, token: str, user_id: str) -> List[Dict[str, Any]]:
+        """Households the signed-in user is a member of, each with whether they have muted it"""
+        return [
+            {**household.to_api(), "muted": muted}
+            for household, muted in self._dao.fetch_households(token, user_id)
+        ]
 
     def get_household(self, token: str, household_id: int) -> Optional[Dict[str, Any]]:
         """One household, or None if it does not exist or the user is not a member"""

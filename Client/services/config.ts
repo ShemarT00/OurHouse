@@ -59,6 +59,7 @@ export const API_ENDPOINTS = {
     GET: (OHID: string) => `/households/${OHID}`,
     UPDATE: (OHID: string) => `/households/${OHID}`,
     DELETE: (OHID: string) => `/households/${OHID}`,
+    MUTED: (OHID: number) => `/households/${OHID}/muted`,
   },
 
   // Members

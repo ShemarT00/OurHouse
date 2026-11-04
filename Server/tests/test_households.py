@@ -66,14 +66,24 @@ def test_create_household_rejects_invalid_names(client, signed_in, dao, body):
     dao.create.assert_not_called()
 
 
-def test_list_households_returns_the_users_households(client, signed_in, dao):
-    dao.list.return_value = [household(1, "The Smiths"), household(2, "Flat 4B")]
+def test_list_households_returns_the_users_households_with_whether_each_is_muted(client, signed_in, dao):
+    # Each household with the caller's own muted flag (#62)
+    dao.list.return_value = [(household(1, "The Smiths"), False), (household(2, "Flat 4B"), True)]
 
     response = client.get("/api/households", headers=AUTH)
 
     assert response.status_code == 200
-    assert [h["name"] for h in response.get_json()] == ["The Smiths", "Flat 4B"]
-    dao.list.assert_called_once_with("good-token")
+    body = response.get_json()
+    assert [(h["name"], h["muted"]) for h in body] == [("The Smiths", False), ("Flat 4B", True)]
+    assert body[0] == {
+        "OHID": 1,
+        "name": "The Smiths",
+        "inviteCode": "ABCD2345",
+        "createdBy": USER_ID,
+        "createdAt": "2026-10-20T00:00:00Z",
+        "muted": False,
+    }
+    dao.list.assert_called_once_with("good-token", USER_ID)
 
 
 def test_get_household(client, signed_in, dao):

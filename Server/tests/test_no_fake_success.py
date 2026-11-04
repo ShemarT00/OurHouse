@@ -19,6 +19,7 @@ IMPLEMENTED = {
     ("GET", "/api/households/<int:household_id>"),
     ("POST", "/api/households/join"),
     ("GET", "/api/households/<int:household_id>/members"),
+    ("PUT", "/api/households/<int:household_id>/muted"),
     ("GET", "/api/households/<int:household_id>/shopping-lists"),
     ("POST", "/api/households/<int:household_id>/shopping-lists"),
     ("GET", "/api/households/<int:household_id>/shopping-lists/<int:list_id>"),

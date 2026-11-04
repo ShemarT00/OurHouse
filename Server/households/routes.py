@@ -18,9 +18,10 @@ def list_households():
     Get all households for the current user
     
     Returns:
-        List of household objects the user is a member of
+        List of household objects the user is a member of, each with
+        "muted" (bool): whether the user has muted that household
     """
-    return _household_controller.list_households(g.token), 200
+    return _household_controller.list_households(g.token, g.user.id), 200
 
 
 @households_bp.route("", methods=["POST"])

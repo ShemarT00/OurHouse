@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator } from 'react-native';
+import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
-import { TextInput } from '@/components';
+import { TextInput, SwitchRow } from '@/components';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useHouseholds } from '@/hooks/useHouseholds';
 
 interface NameFormData {
   name: string;
@@ -14,6 +15,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { logout, logoutMutation } = useAuth();
   const { profile, isLoading, updateProfileAsync, updateMutation } = useUserProfile();
+  const { households, setMuted, muteError } = useHouseholds();
   const [editingName, setEditingName] = useState(false);
   const { control, handleSubmit, reset } = useForm<NameFormData>({ defaultValues: { name: '' } });
 
@@ -48,7 +50,7 @@ export default function SettingsScreen() {
 
   // One section per area of settings, with Sign Out at the bottom of the page
   return (
-    <View className="flex-1 bg-white px-6 pt-14">
+    <ScrollView className="flex-1 bg-white" contentContainerClassName="flex-grow px-6 pt-14">
       <Text className="text-2xl font-bold mb-8">Settings</Text>
 
       <View>
@@ -116,6 +118,20 @@ export default function SettingsScreen() {
         </View>
       </View>
 
+      <View className="mb-6">
+        <Text className="text-lg font-semibold mb-1">Notifications from each household</Text>
+        {households.map((household) => (
+          <SwitchRow
+            key={household.OHID}
+            label={household.name}
+            note={household.muted ? 'Muted' : undefined}
+            value={!household.muted}
+            onValueChange={(on) => setMuted({ OHID: household.OHID, muted: !on })}
+          />
+        ))}
+        {muteError && <Text className="text-red-500 text-sm">{muteError.message}</Text>}
+      </View>
+
       <Pressable
         className="bg-red-500 rounded-lg py-3 items-center mt-auto mb-8"
         onPress={handleLogout}
@@ -127,6 +143,6 @@ export default function SettingsScreen() {
           <Text className="text-white font-semibold text-base">Sign Out</Text>
         )}
       </Pressable>
-    </View>
+    </ScrollView>
   );
 }

@@ -16,6 +16,7 @@ class Member(TableModel):
     first_name: str
     last_name: str
     is_admin: bool = False
+    muted: bool = False  # this member gets no notifications from the household (ADR 0004)
     id: Optional[int] = None
     created_at: Optional[str] = None
 

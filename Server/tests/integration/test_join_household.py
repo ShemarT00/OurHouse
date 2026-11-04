@@ -36,15 +36,15 @@ def test_valid_code_adds_the_user_as_a_member(make_user, household):
     ]
     # Both users see each other
     assert MemberDAO().fetch_members(owner_token, created.id) == members
-    assert created.id in [h.id for h in HouseholdDAO().fetch_households(joiner_token)]
+    assert created.id in [h.id for h, _ in HouseholdDAO().fetch_households(joiner_token, joiner_id)]
 
 
 def test_invalid_code_joins_nothing(make_user, household):
     _, owner_token, created = household
-    _, joiner_token = make_user("Guesser")
+    joiner_id, joiner_token = make_user("Guesser")
 
     assert HouseholdDAO().join_household(joiner_token, "ZZZZZZZZ") is None
-    assert HouseholdDAO().fetch_households(joiner_token) == []
+    assert HouseholdDAO().fetch_households(joiner_token, joiner_id) == []
     assert len(MemberDAO().fetch_members(owner_token, created.id)) == 1
 
 

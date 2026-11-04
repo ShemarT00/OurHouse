@@ -3,7 +3,7 @@ Members Routes
 API endpoints for household member management
 """
 
-from flask import abort, g
+from flask import abort, g, request
 from members import members_bp
 from members.MemberController import MemberController
 from auth.decorators import require_auth
@@ -27,6 +27,33 @@ def list_household_members(household_id):
     if members is None:
         abort(404)
     return members, 200
+
+
+@members_bp.route("/households/<int:household_id>/muted", methods=["PUT"])
+@require_auth
+def set_household_muted(household_id):
+    """
+    Mute or unmute the caller's own membership of a household. A muted member
+    gets no notifications from the household; nothing missed is delivered later.
+
+    Parameters:
+        household_id (int): Household OHID
+
+    Request body:
+        - muted (bool): true to mute, false to unmute
+
+    Returns:
+        {"householdId": int, "muted": bool}
+        (404 if the household does not exist or the user is not a member)
+    """
+    body = request.get_json(silent=True)
+    muted = body.get("muted") if isinstance(body, dict) else None
+    if not isinstance(muted, bool):
+        abort(400, description="muted must be true or false")
+    result = _member_controller.set_muted(g.token, household_id, muted)
+    if result is None:
+        abort(404)
+    return result, 200
 
 
 @members_bp.route("/households/<household_id>/members/<member_id>", methods=["GET"])

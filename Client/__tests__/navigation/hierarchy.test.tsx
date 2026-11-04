@@ -47,6 +47,7 @@ jest.mock('@/hooks/useNotifications', () => ({
 jest.mock('@/hooks/useHouseholds', () => ({
   useHouseholds: () => ({
     ...mockQuery, households: mockHouseholds, createMutation: mockMutation, joinMutation: mockMutation,
+    muteMutation: mockMutation, setMuted: jest.fn(), muteError: null,
     createHouseholdAsync: jest.fn().mockResolvedValue(mockHousehold),
   }),
   useHousehold: (householdId: string) => ({

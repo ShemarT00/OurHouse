@@ -1,9 +1,9 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import { MemberList } from '@/components/organisms/MemberList';
-import type { Member } from '@/types';
+import type { HouseholdMember } from '@/types';
 
-const member = (overrides: Partial<Member>): Member => ({
+const member = (overrides: Partial<HouseholdMember>): HouseholdMember => ({
   OHID: 1,
   userId: 'user-1',
   householdId: 5,

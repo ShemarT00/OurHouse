@@ -47,6 +47,7 @@ export interface Member {
   firstName: string;
   lastName: string;
   isAdmin: boolean;
+  muted: boolean;
   createdAt: string;
 }
 
