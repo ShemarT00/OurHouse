@@ -7,6 +7,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useHouseholds } from '@/hooks/useHouseholds';
 import { ItemEvent } from '@/types';
+import { appVersion, feedbackLink } from '@/utils/appInfo';
+import { openLink } from '@/utils/openLink';
 
 interface NameFormData {
   name: string;
@@ -57,6 +59,8 @@ export default function SettingsScreen() {
       // updateMutation.isError is now true; the error renders under the name
     }
   };
+
+  const feedbackUrl = feedbackLink();
 
   // One section per area of settings, with Sign Out at the bottom of the page
   return (
@@ -153,6 +157,19 @@ export default function SettingsScreen() {
           />
         ))}
         {muteError && <Text className="text-red-500 text-sm">{muteError.message}</Text>}
+      </View>
+
+      <View className="mb-6">
+        <Text className="text-lg font-semibold mb-1">About and help</Text>
+        <View className="flex-row items-center justify-between py-3">
+          <Text className="text-base font-medium">Version</Text>
+          <Text className="text-base text-gray-500">{appVersion()}</Text>
+        </View>
+        {feedbackUrl && (
+          <Pressable accessibilityRole="link" className="py-3 active:opacity-50" onPress={() => openLink(feedbackUrl)}>
+            <Text className="text-base font-medium text-blue-600">Send feedback</Text>
+          </Pressable>
+        )}
       </View>
 
       <Pressable
