@@ -162,6 +162,8 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 EXPO_PUBLIC_API_BASE_URL=http://localhost:5000/api
 ```
 
+Settings → Send feedback emails `EXPO_PUBLIC_FEEDBACK_EMAIL` (read in `utils/appInfo.ts`). Use OurHouse's dedicated feedback address, never a personal one; leave it unset to hide the row.
+
 ### Real-time Subscriptions
 
 For real-time features (notifications, live list updates), services use Supabase real-time:

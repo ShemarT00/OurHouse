@@ -1,5 +1,7 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import { render, fireEvent, waitFor, screen, act } from '@testing-library/react-native';
+import * as Linking from 'expo-linking';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import SettingsScreen from '@/app/(app)/settings';
 import { getHouseholds, setHouseholdMuted } from '@/services/household';
@@ -22,6 +24,9 @@ jest.mock('@/services/user', () => ({
 jest.mock('@/services/household', () => ({ getHouseholds: jest.fn(), setHouseholdMuted: jest.fn() }));
 // The real throwIfError turns a failed response into the error shown; no requests are made
 jest.mock('@/services/config', () => ({}));
+// The version comes from the app's configuration (app.json)
+jest.mock('expo-constants', () => ({ __esModule: true, default: { expoConfig: { version: '1.4.2' } } }));
+jest.mock('expo-linking', () => ({ openURL: jest.fn() }));
 
 const user = (name: string, switchedOffEvents: ItemEvent[] = []): User => ({
   OHID: 'u1', name, email: 'jane@example.com', createdAt: '', switchedOffEvents,
@@ -296,6 +301,51 @@ describe('SettingsScreen', () => {
       expect(setSwitchedOffEvents).toHaveBeenCalledTimes(2);
       expect(switchValue('Added')).toBe(true);
       expect(switchValue('Edited')).toBe(false);
+    });
+  });
+
+  describe('About and help', () => {
+    const feedbackEmail = process.env.EXPO_PUBLIC_FEEDBACK_EMAIL;
+    afterEach(() => {
+      jest.restoreAllMocks();
+      if (feedbackEmail === undefined) delete process.env.EXPO_PUBLIC_FEEDBACK_EMAIL;
+      else process.env.EXPO_PUBLIC_FEEDBACK_EMAIL = feedbackEmail;
+    });
+
+    it("shows the app's version", async () => {
+      await renderSettings();
+
+      expect(screen.getByText('About and help')).toBeTruthy();
+      expect(screen.getByText('Version')).toBeTruthy();
+      expect(screen.getByText('1.4.2')).toBeTruthy();
+    });
+
+    it('Send feedback opens an email to the feedback address with the version and device filled in', async () => {
+      process.env.EXPO_PUBLIC_FEEDBACK_EMAIL = 'feedback@ourhouse.example';
+      jest.replaceProperty(Platform, 'OS', 'ios');
+      jest.spyOn(Platform, 'constants', 'get').mockReturnValue({
+        interfaceIdiom: 'phone', systemName: 'iOS', osVersion: '17.4',
+      } as unknown as typeof Platform.constants);
+      await renderSettings();
+
+      fireEvent.press(screen.getByText('Send feedback'));
+
+      await waitFor(() => expect(Linking.openURL).toHaveBeenCalledTimes(1));
+      const link = (Linking.openURL as jest.Mock).mock.calls[0][0] as string;
+      const [address, query] = link.split('?');
+      expect(address).toBe('mailto:feedback@ourhouse.example');
+      const params = new URLSearchParams(query);
+      expect(params.get('subject')).toBe('OurHouse feedback');
+      expect(params.get('body')).toContain('App version: 1.4.2');
+      expect(params.get('body')).toContain('Device: iPhone, iOS 17.4');
+    });
+
+    it('hides Send feedback when no feedback address is configured', async () => {
+      delete process.env.EXPO_PUBLIC_FEEDBACK_EMAIL;
+      await renderSettings();
+
+      expect(screen.getByText('1.4.2')).toBeTruthy();
+      expect(screen.queryByText('Send feedback')).toBeNull();
     });
   });
 });
