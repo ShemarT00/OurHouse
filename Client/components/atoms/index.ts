@@ -5,3 +5,4 @@ export * from './PrioritySelector';
 export * from './BurgerMenuButton';
 export * from './StorePicker';
 export * from './RetailerPicker';
+export * from './Tag';

@@ -1,8 +1,9 @@
 import { View, Text, FlatList, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Tag } from '@/components';
 import { useHouseholds } from '@/hooks/useHouseholds';
 import { NEW_HOUSEHOLD, JOIN_HOUSEHOLD, householdRoute, FROM_OUTSIDE_HOUSEHOLD } from '@/navigation/routes';
-import type { Household } from '@/types';
+import type { MemberHousehold } from '@/types';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -46,18 +47,22 @@ export default function HomeScreen() {
 
       <FlatList
         data={households}
-        keyExtractor={(item: Household) => String(item.OHID)}
+        keyExtractor={(item: MemberHousehold) => String(item.OHID)}
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
         refreshing={isRefetching}
         onRefresh={refetch}
         renderItem={({ item }) => (
           <Pressable
-            className="border border-gray-200 rounded-xl p-4 mb-3"
+            className="flex-row items-center justify-between border border-gray-200 rounded-xl p-4 mb-3"
+            accessibilityRole="button"
+            accessibilityLabel={item.muted ? `${item.name}, muted` : item.name}
             onPress={() =>
               router.push(householdRoute(item.OHID), FROM_OUTSIDE_HOUSEHOLD)
             }
           >
-            <Text className="text-lg font-semibold">{item.name}</Text>
+            <Text className="flex-1 text-lg font-semibold mr-2">{item.name}</Text>
+            {/* Muted in Settings: explains why the household has gone quiet */}
+            {item.muted ? <Tag label="Muted" /> : null}
           </Pressable>
         )}
         ListEmptyComponent={

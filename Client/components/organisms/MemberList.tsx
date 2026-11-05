@@ -1,5 +1,6 @@
 import { FlatList, View, Text } from 'react-native';
 import type { HouseholdMember } from '@/types';
+import { Tag } from '@/components/atoms';
 
 // List of household members: avatar initials, full name, and Admin / You labels
 interface MemberListProps {
@@ -31,11 +32,7 @@ function MemberRow({ member, isCurrentUser }: MemberRowProps) {
         {fullName(member)}
         {isCurrentUser && <Text className="text-gray-400"> (You)</Text>}
       </Text>
-      {member.isAdmin && (
-        <View className="rounded-full px-2 py-0.5 bg-blue-100">
-          <Text className="text-xs font-medium text-blue-700">Admin</Text>
-        </View>
-      )}
+      {member.isAdmin && <Tag label="Admin" variant="info" />}
     </View>
   );
 }
